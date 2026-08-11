@@ -6,6 +6,7 @@ import argparse
 import json
 import subprocess
 import sys
+import warnings
 from dataclasses import asdict
 from datetime import date
 from pathlib import Path
@@ -15,6 +16,7 @@ from ingestion.contracts import CONTRACTS
 from ingestion.loaders import BackfillResult, run_backfill
 from ingestion.loaders.incremental import event_date
 from ingestion.sources.files import read_records
+from observability.resource_guardrails import enforce_storage, estimate_records
 
 
 def select_range(
@@ -49,8 +51,17 @@ def execute_backfill(
     quarantine_root: Path = Path("data/quarantine"),
     metadata_root: Path = Path("warehouse/metadata/ingestion_runs"),
     run_id: str | None = None,
+    budget_path: Path | None = None,
+    project_root: Path = Path("."),
 ) -> BackfillResult:
     selected = select_range(dataset, records, start, end)
+    if budget_path is not None:
+        assessment = enforce_storage(
+            project_root=project_root.resolve(), raw_root=raw_root.resolve(),
+            projected_write_bytes=estimate_records(selected), budget_path=budget_path,
+        )
+        if assessment.status == "warning":
+            warnings.warn("resource guardrail warning: " + "; ".join(assessment.reasons), stacklevel=2)
     return run_backfill(
         dataset,
         selected,
@@ -89,6 +100,7 @@ def parser() -> argparse.ArgumentParser:
     command.add_argument("--run-id")
     command.add_argument("--skip-downstream", action="store_true")
     command.add_argument("--dbt-executable", default=str(Path(sys.executable).with_name("dbt")))
+    command.add_argument("--resource-budget", type=Path, default=Path("config/resource_budget.yaml"))
     return command
 
 
@@ -115,6 +127,7 @@ def main() -> int:
         quarantine_root=args.quarantine_root,
         metadata_root=args.metadata_root,
         run_id=args.run_id,
+        budget_path=args.resource_budget,
     )
     if not args.skip_downstream:
         rebuild_downstream(args.dataset, args.dbt_executable, args.raw_root, args.metadata_root)

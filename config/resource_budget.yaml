@@ -22,3 +22,9 @@ measurement:
   volume_available_gib: 29
   volume_utilization_percent: 94
   note: "Rebaseline limits when the development machine or available storage changes."
+
+storage:
+  warning_gb: 9
+  hard_limit_gb: 12
+  minimum_free_gb: 5
+  cleanup_retention_days: 14

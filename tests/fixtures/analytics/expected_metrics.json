@@ -1,0 +1,17 @@
+{
+  "as_of": "2026-08-09",
+  "symbol": "AAPL",
+  "daily_return": 0.008403361344537785,
+  "rolling_20d_return": 0.2,
+  "rolling_20d_volatility": 0.000496425826732139,
+  "annualized_20d_volatility": 0.00788051569153728,
+  "sector": "Information Technology",
+  "sector_average_return": -0.02079831932773113,
+  "market_breadth": 0.0,
+  "advancers": 1,
+  "decliners": 1,
+  "unchanged": 1,
+  "average_volume_20d": 105.0,
+  "relative_volume": 1.9047619047619047,
+  "return_observations_20d": 20
+}

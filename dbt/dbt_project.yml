@@ -4,6 +4,7 @@ config-version: 2
 profile: marketforge
 
 model-paths: ["models"]
+seed-paths: ["seeds"]
 macro-paths: ["macros"]
 test-paths: ["tests"]
 clean-targets: ["target", "dbt_packages"]
@@ -23,3 +24,7 @@ models:
     marts:
       +materialized: table
       +schema: marts
+
+seeds:
+  marketforge:
+    +schema: reference

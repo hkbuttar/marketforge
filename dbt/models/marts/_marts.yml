@@ -30,6 +30,17 @@ models:
     columns:
       - name: trade_date
         data_tests: [not_null, unique]
+  - name: mart_sector_daily
+    description: "Daily equal-weight return statistics by reference security sector."
+    columns:
+      - name: trade_date
+        data_tests: [not_null]
+      - name: sector
+        data_tests: [not_null]
+    data_tests:
+      - unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [trade_date, sector]
   - name: mart_company_snapshot
     description: "Latest price, fundamental coverage, and earnings snapshot by source symbol."
     columns:

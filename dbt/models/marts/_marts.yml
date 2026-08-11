@@ -2,12 +2,22 @@ version: 2
 
 models:
   - name: mart_stream_anomalies
-    description: "Optional StreamAlpha anomalies enriched with prior daily market context."
+    description: "Optional StreamAlpha anomalies enriched with point-in-time daily, earnings, volume, and factor context."
     columns:
       - name: event_id
         data_tests: [not_null, unique]
       - name: event_timestamp
         data_tests: [not_null]
+  - name: mart_intraday_anomalies
+    description: "Portfolio-facing StreamAlpha anomaly mart with historical context and no same-day lookahead."
+    columns:
+      - name: event_id
+        data_tests: [not_null, unique]
+      - name: context_trade_date
+        data_tests:
+          - expression_is_true:
+              arguments:
+                expression: "context_trade_date is null or context_trade_date < cast(event_timestamp as date)"
   - name: mart_security_daily
     description: "Consumer-facing daily symbol analytics at source-specific grain."
     columns:

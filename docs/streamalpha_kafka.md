@@ -65,12 +65,17 @@ offset is acknowledged. Invalid messages are written to an immutable quarantine
 artifact before their offsets are committed, preventing a poison message from
 blocking the local consumer forever.
 
-The optional `mart_stream_anomalies` joins events to the latest available daily
-price context. Enable it only after stream files exist:
+The optional `mart_intraday_anomalies` joins every event to information knowable
+before the anomaly: the prior completed session's return, 20-day volatility and
+relative volume; the latest earlier earnings event; and five-session security and
+market returns with their excess-return factor. The strict `< event date` join
+prevents an intraday anomaly from seeing that day's closing bar. The legacy
+`mart_stream_anomalies` relation remains available as the underlying table.
+Enable the integration only after stream files exist:
 
 ```bash
 dbt build --project-dir dbt --profiles-dir dbt \
-  --vars '{enable_streamalpha: true}' --select mart_stream_anomalies
+  --vars '{enable_streamalpha: true}' --select +mart_intraday_anomalies
 ```
 
 No broker or Kafka package is required for normal batch ingestion, analytics,

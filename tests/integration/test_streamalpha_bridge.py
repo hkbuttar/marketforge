@@ -1,4 +1,7 @@
 import json
+import shutil
+import subprocess
+import sys
 import tempfile
 import unittest
 from datetime import datetime, timezone
@@ -8,11 +11,19 @@ from unittest.mock import patch
 import duckdb
 
 from ingestion.streaming.kafka import KafkaMessage, consume_microbatch
+from ingestion.loaders import run_backfill
+from ingestion.sources.files import read_records
 from ingestion.sources.streamalpha import (
     PolledAnomalyConsumer,
     StreamAlphaBackendError,
     fetch_anomalies,
 )
+
+
+ROOT = Path(__file__).parents[2]
+DBT = shutil.which("dbt") or str(Path(sys.executable).parent / "dbt")
+if not Path(DBT).is_file():
+    DBT = None
 
 
 def message(offset, event_id=None, score=3.0):
@@ -157,6 +168,69 @@ class StreamAlphaBridgeTests(unittest.TestCase):
             self.assertEqual(result.quarantined_events, 1)
             self.assertEqual(len(consumer.committed), 1)
             self.assertTrue((root / "quarantine/run=bad.jsonl").exists())
+
+    @unittest.skipUnless(DBT, "dbt is not installed in this environment")
+    def test_intraday_mart_uses_only_prior_historical_context(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            raw = root / "raw"
+            options = {
+                "source": "test-provider", "raw_root": raw,
+                "quarantine_root": root / "quarantine", "metadata_root": root / "metadata",
+                "now": datetime(2026, 8, 11, tzinfo=timezone.utc),
+            }
+            prices = [
+                {"symbol": "AAPL", "date": "2026-08-06", "open": 99, "high": 101,
+                 "low": 98, "close": 100, "volume": 10, "source_record_id": "p6"},
+                {"symbol": "AAPL", "date": "2026-08-07", "open": 100, "high": 102,
+                 "low": 99, "close": 101, "volume": 20, "source_record_id": "p7"},
+                {"symbol": "AAPL", "date": "2026-08-10", "open": 109, "high": 111,
+                 "low": 108, "close": 110, "volume": 100, "source_record_id": "p10"},
+            ]
+            run_backfill("prices", prices, run_id="context-prices", **options)
+            for dataset in ("fundamentals", "earnings", "macro", "news"):
+                run_backfill(
+                    dataset, read_records(str(ROOT / f"tests/fixtures/ci/{dataset}.jsonl")),
+                    run_id=f"context-{dataset}", **options,
+                )
+            consume_microbatch(
+                FakeConsumer([message(1)]), raw_root=raw,
+                quarantine_root=root / "stream-quarantine", metadata_root=root / "stream-metadata",
+                run_id="context-event", now=datetime(2026, 8, 11, tzinfo=timezone.utc),
+            )
+            database = root / "context.duckdb"
+            profiles = root / "profiles"
+            profiles.mkdir()
+            (profiles / "profiles.yml").write_text(
+                "marketforge:\n  target: test\n  outputs:\n    test:\n      type: duckdb\n"
+                f"      path: '{database}'\n      schema: main\n      threads: 2\n",
+                encoding="utf-8",
+            )
+            completed = subprocess.run(
+                [DBT, "build", "--project-dir", str(ROOT / "dbt"), "--profiles-dir", str(profiles),
+                 "--vars", json.dumps({"raw_root": str(raw), "metadata_root": str(root / "metadata"),
+                                        "enable_streamalpha": True}),
+                 "--select", "+mart_intraday_anomalies", "--indirect-selection", "cautious",
+                 "--no-use-colors"],
+                cwd=ROOT, text=True, capture_output=True, check=False,
+            )
+            self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
+            with duckdb.connect(str(database), read_only=True) as connection:
+                context = connection.execute(
+                    """SELECT context_trade_date, prior_daily_close, prior_relative_volume,
+                              recent_5d_return, recent_5d_market_return,
+                              recent_factor_excess_return, latest_earnings_timestamp,
+                              latest_eps_surprise
+                       FROM main_marts.mart_intraday_anomalies"""
+                ).fetchone()
+            self.assertEqual(str(context[0]), "2026-08-07")
+            self.assertEqual(context[1], 101.0)  # Aug 10 close is deliberately excluded.
+            self.assertAlmostEqual(context[2], 20 / 15)
+            self.assertAlmostEqual(context[3], 0.01)
+            self.assertAlmostEqual(context[4], 0.01)
+            self.assertAlmostEqual(context[5], 0.0)
+            self.assertEqual(context[6].astimezone(timezone.utc).date().isoformat(), "2026-08-01")
+            self.assertAlmostEqual(context[7], 0.1)
 
 
 if __name__ == "__main__":

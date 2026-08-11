@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 from dataclasses import asdict
 from datetime import date, timedelta
@@ -17,14 +18,18 @@ from dagster import (
     AssetSelection,
     ConfigurableResource,
     Definitions,
+    DefaultScheduleStatus,
     Failure,
     FreshnessPolicy,
     MaterializeResult,
     Output,
+    RunRequest,
     RetryPolicy,
+    SkipReason,
     asset,
     define_asset_job,
     multi_asset,
+    schedule,
 )
 
 from ingestion.checkpoints import CheckpointStore
@@ -243,12 +248,111 @@ rebuild_marts = define_asset_job(
     selection=AssetSelection.assets(*MART_MODELS, "quality_gate", "api_ready"),
 )
 
+prices_ingestion = define_asset_job(
+    "prices_ingestion", selection=AssetSelection.assets("raw_prices")
+)
+macro_ingestion = define_asset_job(
+    "macro_ingestion", selection=AssetSelection.assets("raw_macro")
+)
+fundamentals_ingestion = define_asset_job(
+    "fundamentals_ingestion", selection=AssetSelection.assets("raw_fundamentals")
+)
+earnings_ingestion = define_asset_job(
+    "earnings_ingestion", selection=AssetSelection.assets("raw_earnings")
+)
+news_ingestion = define_asset_job(
+    "news_ingestion", selection=AssetSelection.assets("raw_news")
+)
+
+
+def _scheduled_ingestion(dataset: str, scheduled_for):
+    if os.getenv("MARKETFORGE_ENABLE_SCHEDULES") != "1":
+        return SkipReason("Local schedules are disabled; set MARKETFORGE_ENABLE_SCHEDULES=1")
+    location = os.getenv(f"MARKETFORGE_{dataset.upper()}_INPUT", "")
+    if not location:
+        return SkipReason(f"MARKETFORGE_{dataset.upper()}_INPUT is not configured")
+    source = os.getenv("MARKETFORGE_SOURCE", "configured-provider")
+    initial_start = os.getenv("MARKETFORGE_INITIAL_START")
+    overlap = int(os.getenv(f"MARKETFORGE_{dataset.upper()}_OVERLAP_DAYS", "0"))
+    config = {
+        "mode": "incremental", "source": source, "overlap_days": overlap,
+        f"{dataset}_input": location,
+    }
+    if initial_start:
+        config["initial_start"] = initial_start
+    return RunRequest(
+        run_key=f"{dataset}-{scheduled_for.isoformat()}",
+        run_config={"resources": {"platform": {"config": config}}},
+        tags={"marketforge/dataset": dataset, "marketforge/scheduled": "true"},
+    )
+
+
+@schedule(
+    job=prices_ingestion, cron_schedule="15 17 * * 1-5", execution_timezone="America/Chicago",
+    default_status=DefaultScheduleStatus.STOPPED,
+)
+def prices_after_close_schedule(context):
+    return _scheduled_ingestion("prices", context.scheduled_execution_time)
+
+
+@schedule(
+    job=macro_ingestion, cron_schedule="30 6 * * *", execution_timezone="America/Chicago",
+    default_status=DefaultScheduleStatus.STOPPED,
+)
+def macro_daily_check_schedule(context):
+    return _scheduled_ingestion("macro", context.scheduled_execution_time)
+
+
+@schedule(
+    job=fundamentals_ingestion, cron_schedule="0 7 * * *", execution_timezone="America/Chicago",
+    default_status=DefaultScheduleStatus.STOPPED,
+)
+def fundamentals_daily_check_schedule(context):
+    return _scheduled_ingestion("fundamentals", context.scheduled_execution_time)
+
+
+@schedule(
+    job=earnings_ingestion, cron_schedule="30 17 * * 1-5", execution_timezone="America/Chicago",
+    default_status=DefaultScheduleStatus.STOPPED,
+)
+def earnings_daily_schedule(context):
+    return _scheduled_ingestion("earnings", context.scheduled_execution_time)
+
+
+@schedule(
+    job=news_ingestion, cron_schedule="0 */4 * * *", execution_timezone="America/Chicago",
+    default_status=DefaultScheduleStatus.STOPPED,
+)
+def news_periodic_schedule(context):
+    return _scheduled_ingestion("news", context.scheduled_execution_time)
+
+
+@schedule(
+    job=daily_incremental, cron_schedule="15 18 * * 1-5", execution_timezone="America/Chicago",
+    default_status=DefaultScheduleStatus.STOPPED,
+)
+def daily_publish_schedule(context):
+    if os.getenv("MARKETFORGE_ENABLE_SCHEDULES") != "1":
+        return SkipReason("Local schedules are disabled; set MARKETFORGE_ENABLE_SCHEDULES=1")
+    return RunRequest(
+        run_key=f"publish-{context.scheduled_execution_time.date().isoformat()}",
+        tags={"marketforge/scheduled": "true", "marketforge/purpose": "publish"},
+    )
+
 
 defs = Definitions(
     assets=[
         raw_prices, raw_fundamentals, raw_earnings, raw_macro, raw_news,
         staging_models, intermediate_models, mart_models, quality_gate, api_ready,
     ],
-    jobs=[daily_incremental, historical_backfill, quality_validation_job, rebuild_marts],
+    jobs=[
+        daily_incremental, historical_backfill, quality_validation_job, rebuild_marts,
+        prices_ingestion, macro_ingestion, fundamentals_ingestion, earnings_ingestion, news_ingestion,
+    ],
+    schedules=[
+        prices_after_close_schedule, macro_daily_check_schedule,
+        fundamentals_daily_check_schedule, earnings_daily_schedule,
+        news_periodic_schedule, daily_publish_schedule,
+    ],
     resources={"platform": PlatformResource()},
 )

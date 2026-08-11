@@ -17,6 +17,17 @@ class OrchestrationDefinitionTests(unittest.TestCase):
             "daily_incremental", "historical_backfill", "quality_validation", "rebuild_marts"
         }.issubset(names))
 
+    def test_schedules_are_opt_in_and_timezone_explicit(self):
+        schedules = self.repository.schedule_defs
+        self.assertEqual({schedule.name for schedule in schedules}, {
+            "prices_after_close_schedule", "macro_daily_check_schedule",
+            "fundamentals_daily_check_schedule", "earnings_daily_schedule",
+            "news_periodic_schedule", "daily_publish_schedule",
+        })
+        for schedule in schedules:
+            self.assertEqual(schedule.execution_timezone, "America/Chicago")
+            self.assertEqual(schedule.default_status.value, "STOPPED")
+
     def test_asset_graph_has_quality_gated_serving_lineage(self):
         from dagster import AssetKey
 

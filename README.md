@@ -73,3 +73,6 @@ The multi-level dbt quality gate and source freshness policy are documented in
 
 Dagster asset lineage and the four local jobs are documented in
 [`docs/dagster_orchestration.md`](docs/dagster_orchestration.md).
+
+Optional laptop-safe schedules and manual commands are documented in
+[`docs/scheduling.md`](docs/scheduling.md).

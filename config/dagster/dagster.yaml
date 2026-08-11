@@ -1,0 +1,9 @@
+# Optional local Dagster instance. Serial execution prevents DuckDB writer overlap.
+run_coordinator:
+  module: dagster.core.run_coordinator
+  class: QueuedRunCoordinator
+  config:
+    max_concurrent_runs: 1
+
+concurrency:
+  default_op_concurrency_limit: 1

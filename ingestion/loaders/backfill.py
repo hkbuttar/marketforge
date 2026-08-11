@@ -92,6 +92,41 @@ def _stable_record_id(row: Mapping[str, Any]) -> str:
     return hashlib.sha256(encoded).hexdigest()
 
 
+def partition_paths(
+    raw_root: Path, dataset: str, event_date: date, run_id: str
+) -> tuple[Path, Path]:
+    """Return deterministic staging and final paths for one monthly artifact."""
+    relative = (
+        Path(dataset) / f"year={event_date.year:04d}" / f"month={event_date.month:02d}"
+        / f"part-{run_id}.parquet"
+    )
+    return raw_root / ".tmp" / run_id / relative, raw_root / relative
+
+
+def deduplicate_rows(
+    rows: Iterable[dict[str, Any]], existing: dict[tuple[Any, ...], tuple[Any, ...]], contract
+) -> tuple[list[dict[str, Any]], int]:
+    value_fields = tuple(
+        field for field in contract.fields if field not in {"ingested_at", "source_record_id"}
+        or field in contract.idempotency_by
+    )
+    new_rows = []
+    duplicate_rows = 0
+    for row in rows:
+        key = tuple(row[field] for field in contract.idempotency_by)
+        values = tuple(row[field] for field in value_fields)
+        if key not in existing:
+            new_rows.append(row)
+            existing[key] = values
+        elif existing[key] == values:
+            duplicate_rows += 1
+        else:
+            raise IdempotencyConflictError(
+                f"{contract.name} replay changed canonical values for idempotency key {key!r}"
+            )
+    return new_rows, duplicate_rows
+
+
 def _size(paths: Iterable[Path]) -> int:
     return sum(path.stat().st_size for path in paths if path.is_file())
 
@@ -258,24 +293,7 @@ def run_backfill(
     write_quarantine(validation.rejected, quarantine_root)
     existing = _existing_rows(raw_root / dataset, contract)
     pre_write_row_count = len(existing)
-    value_fields = tuple(
-        field for field in contract.fields if field not in {"ingested_at", "source_record_id"}
-        or field in contract.idempotency_by
-    )
-    new_rows = []
-    duplicate_rows = 0
-    for row in validation.accepted:
-        key = tuple(row[field] for field in contract.idempotency_by)
-        values = tuple(row[field] for field in value_fields)
-        if key not in existing:
-            new_rows.append(row)
-            existing[key] = values
-        elif existing[key] == values:
-            duplicate_rows += 1
-        else:
-            raise IdempotencyConflictError(
-                f"{dataset} replay changed canonical values for idempotency key {key!r}"
-            )
+    new_rows, duplicate_rows = deduplicate_rows(validation.accepted, existing, contract)
     groups: dict[tuple[int, int], list[dict[str, Any]]] = defaultdict(list)
     for row in new_rows:
         event_value = row[EVENT_FIELDS[dataset]]
@@ -284,16 +302,8 @@ def run_backfill(
 
     staged: list[tuple[Path, Path]] = []
     for (year, month), partition_rows in sorted(groups.items()):
-        final_target = (
-            raw_root
-            / dataset
-            / f"year={year:04d}"
-            / f"month={month:02d}"
-            / f"part-{run_id}.parquet"
-        )
-        staging_target = (
-            raw_root / ".tmp" / run_id / dataset / f"year={year:04d}" / f"month={month:02d}"
-            / f"part-{run_id}.parquet"
+        staging_target, final_target = partition_paths(
+            raw_root, dataset, date(year, month, 1), run_id
         )
         _stage_partition(contract, partition_rows, staging_target, final_target, failure_hook)
         staged.append((staging_target, final_target))

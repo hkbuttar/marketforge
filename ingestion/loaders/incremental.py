@@ -33,6 +33,27 @@ def event_date(dataset: str, row: Mapping[str, Any]) -> date:
     return parsed
 
 
+def calculate_fetch_window(
+    *, checkpoint_date: date | None, initial_start: date | None,
+    through: date, overlap_days: int,
+) -> tuple[date, date]:
+    if overlap_days < 0:
+        raise ValueError("overlap_days must be non-negative")
+    if checkpoint_date:
+        fetch_from = (
+            checkpoint_date + timedelta(days=1)
+            if overlap_days == 0
+            else checkpoint_date - timedelta(days=overlap_days - 1)
+        )
+    elif initial_start:
+        fetch_from = initial_start
+    else:
+        raise ValueError("initial_start is required when no checkpoint exists")
+    if through < fetch_from and checkpoint_date is None:
+        raise ValueError("through date must not precede fetch start")
+    return fetch_from, through
+
+
 def run_incremental(
     dataset: str,
     records: Iterable[Mapping[str, Any]],
@@ -51,23 +72,13 @@ def run_incremental(
 ) -> IncrementalResult:
     if dataset not in CONTRACTS:
         raise ValueError(f"unknown dataset {dataset!r}")
-    if overlap_days < 0:
-        raise ValueError("overlap_days must be non-negative")
     now = now or datetime.now(timezone.utc)
     through = through or now.date()
     checkpoint = checkpoint_store.get(dataset, source)
-    if checkpoint:
-        fetch_from = (
-            checkpoint.last_successful_event_date + timedelta(days=1)
-            if overlap_days == 0
-            else checkpoint.last_successful_event_date - timedelta(days=overlap_days - 1)
-        )
-    elif initial_start:
-        fetch_from = initial_start
-    else:
-        raise ValueError("initial_start is required when no checkpoint exists")
-    if through < fetch_from and checkpoint is None:
-        raise ValueError("through date must not precede fetch start")
+    fetch_from, through = calculate_fetch_window(
+        checkpoint_date=checkpoint.last_successful_event_date if checkpoint else None,
+        initial_start=initial_start, through=through, overlap_days=overlap_days,
+    )
 
     supplied = [dict(row) for row in records]
     selected = []

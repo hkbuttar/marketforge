@@ -70,3 +70,6 @@ documented in [`docs/dbt_marts.md`](docs/dbt_marts.md).
 
 The multi-level dbt quality gate and source freshness policy are documented in
 [`docs/dbt_testing.md`](docs/dbt_testing.md).
+
+Dagster asset lineage and the four local jobs are documented in
+[`docs/dagster_orchestration.md`](docs/dagster_orchestration.md).

@@ -23,8 +23,12 @@ NOW = datetime(2026, 8, 11, tzinfo=timezone.utc)
 class DbtStagingTests(unittest.TestCase):
     def test_all_staging_models_build_and_normalize(self):
         records = {
-            "prices": {"symbol": "aapl", "date": "2026-08-10", "open": 100, "high": 102,
-                       "low": 99, "close": 101, "volume": 10, "source_record_id": "p1"},
+            "prices": [
+                {"symbol": "aapl", "date": "2026-08-07", "open": 99, "high": 101,
+                 "low": 98, "close": 100, "volume": 9, "source_record_id": "p0"},
+                {"symbol": "aapl", "date": "2026-08-10", "open": 100, "high": 102,
+                 "low": 99, "close": 101, "volume": 10, "source_record_id": "p1"},
+            ],
             "fundamentals": {"symbol": "aapl", "metric_name": "Revenue", "period_start": "2026-04-01",
                              "period_end": "2026-06-30", "period_type": "quarter", "filed_at": "2026-08-01T00:00:00Z",
                              "value": 1.0, "unit": "usd", "currency": "usd", "source_record_id": "f1"},
@@ -42,7 +46,8 @@ class DbtStagingTests(unittest.TestCase):
             raw = temp / "raw"
             for dataset, record in records.items():
                 run_backfill(
-                    dataset, [record], source="Test-Provider", raw_root=raw,
+                    dataset, record if isinstance(record, list) else [record],
+                    source="Test-Provider", raw_root=raw,
                     quarantine_root=temp / "quarantine", metadata_root=temp / "metadata",
                     run_id=f"dbt-{dataset}", now=NOW,
                 )
@@ -74,6 +79,21 @@ class DbtStagingTests(unittest.TestCase):
                 self.assertEqual(connection.execute(
                     "SELECT count(*) FROM main_staging.stg_news WHERE headline='Example headline'"
                 ).fetchone()[0], 1)
+                daily_return = connection.execute(
+                    """SELECT daily_return FROM main_intermediate.int_daily_returns
+                       WHERE trade_date=DATE '2026-08-10'"""
+                ).fetchone()[0]
+                self.assertAlmostEqual(daily_return, 0.01)
+                surprise = connection.execute(
+                    "SELECT eps_surprise, eps_surprise_percent FROM main_intermediate.int_earnings_surprises"
+                ).fetchone()
+                self.assertAlmostEqual(surprise[0], 0.1)
+                self.assertAlmostEqual(surprise[1], 0.1)
+                aligned = connection.execute(
+                    """SELECT count(*) FROM main_intermediate.int_macro_aligned
+                       WHERE available_date > trade_date"""
+                ).fetchone()[0]
+                self.assertEqual(aligned, 0)
 
 
 if __name__ == "__main__":

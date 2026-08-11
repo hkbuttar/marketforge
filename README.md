@@ -60,3 +60,7 @@ methodology and results are in [`docs/duckdb_analytics.md`](docs/duckdb_analytic
 
 The dbt transformation project begins with normalized, deduplicated staging views
 for every initial dataset. See [`docs/dbt_staging.md`](docs/dbt_staging.md).
+
+Reusable return, volatility, point-in-time fundamental, earnings-surprise, and
+macro-alignment logic lives in the dbt intermediate layer described in
+[`docs/dbt_intermediate.md`](docs/dbt_intermediate.md).

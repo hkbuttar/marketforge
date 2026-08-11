@@ -1,0 +1,30 @@
+version: 2
+
+models:
+  - name: int_daily_returns
+    description: "Daily close-to-close returns computed once for downstream reuse."
+    columns:
+      - name: price_bar_key
+        data_tests: [not_null, unique]
+  - name: int_rolling_volatility
+    description: "Trailing 20-observation return and volatility features."
+    columns:
+      - name: price_bar_key
+        data_tests: [not_null, unique]
+  - name: int_security_fundamentals
+    description: "Fundamental observations with point-in-time effective ranges."
+    columns:
+      - name: fundamental_observation_key
+        data_tests: [not_null, unique]
+  - name: int_earnings_surprises
+    description: "Absolute and percentage EPS surprises with zero-safe division."
+    columns:
+      - name: earnings_event_key
+        data_tests: [not_null, unique]
+  - name: int_macro_aligned
+    description: "Latest macro value knowable on each observed trading date."
+    columns:
+      - name: trade_date
+        data_tests: [not_null]
+      - name: series_id
+        data_tests: [not_null]

@@ -1,0 +1,24 @@
+# Step 1 baseline, measured 2026-08-11 on the initial development machine.
+# Decimal GB values are used for storage budgets; runtime code converts them to bytes.
+machine:
+  model: "MacBook Pro (Mac16,7)"
+  architecture: arm64
+  processor: "Apple M4 Pro"
+  cpu_cores: 14
+  ram_gb: 48
+
+project_limits:
+  # The volume had roughly 29 GiB free when this budget was set. Keep >50% as headroom.
+  total_disk_gb: 12
+  docker_gb: 3
+  raw_data_gb: 5
+  transformed_data_gb: 3
+  # Remaining project disk allowance covers metadata, code, logs, and temporary files.
+  daily_incremental_runtime_seconds: 300
+  daily_incremental_peak_ram_mb: 4096
+
+measurement:
+  measured_at: "2026-08-11"
+  volume_available_gib: 29
+  volume_utilization_percent: 94
+  note: "Rebaseline limits when the development machine or available storage changes."

@@ -273,7 +273,7 @@ These are not concurrency or throughput claims. See
 
 ## Testing
 
-The deterministic suite currently passes **115 tests across all 19 required
+The deterministic suite currently passes **121 tests across all 19 required
 validation categories**, with zero failures, errors, or skips, measured on
 2026-08-11:
 
@@ -308,6 +308,8 @@ Useful reproducible commands:
 
 ```bash
 python -m scripts.check_mvp --allow-incomplete
+python -m scripts.check_robustness
+python -m scripts.check_definition_of_done
 python -m scripts.load_tiingo --tickers AAPL,MSFT --start 2026-08-01 --end 2026-08-10
 python -m benchmarks.run
 python -m scripts.demo
@@ -369,5 +371,7 @@ a system of record. See [`docs/deployment.md`](docs/deployment.md).
 - [React control plane](docs/frontend_console.md)
 - [Implementation-order audit](docs/implementation_order.md)
 - [MVP readiness](docs/mvp_readiness.md)
+- [Maximum-robustness readiness](docs/maximum_robustness.md)
+- [Final Definition of Done](docs/definition_of_done.md)
 - [CI/CD](docs/ci_cd.md)
 - [Deployment](docs/deployment.md)

@@ -1,0 +1,246 @@
+{
+  "generated_at": "2026-08-11T18:39:33.267186+00:00",
+  "dbt_invocation_id": "a75e25b2-5a29-4b7d-bd4b-6458b90059f7",
+  "nodes": [
+    {
+      "id": "model.marketforge.int_daily_returns",
+      "name": "int_daily_returns",
+      "type": "model",
+      "path": "models/intermediate/int_daily_returns.sql",
+      "relation": "\"transform\".\"main_intermediate\".\"int_daily_returns\""
+    },
+    {
+      "id": "model.marketforge.int_earnings_surprises",
+      "name": "int_earnings_surprises",
+      "type": "model",
+      "path": "models/intermediate/int_earnings_surprises.sql",
+      "relation": "\"transform\".\"main_intermediate\".\"int_earnings_surprises\""
+    },
+    {
+      "id": "model.marketforge.int_macro_aligned",
+      "name": "int_macro_aligned",
+      "type": "model",
+      "path": "models/intermediate/int_macro_aligned.sql",
+      "relation": "\"transform\".\"main_intermediate\".\"int_macro_aligned\""
+    },
+    {
+      "id": "model.marketforge.int_rolling_volatility",
+      "name": "int_rolling_volatility",
+      "type": "model",
+      "path": "models/intermediate/int_rolling_volatility.sql",
+      "relation": "\"transform\".\"main_intermediate\".\"int_rolling_volatility\""
+    },
+    {
+      "id": "model.marketforge.int_security_fundamentals",
+      "name": "int_security_fundamentals",
+      "type": "model",
+      "path": "models/intermediate/int_security_fundamentals.sql",
+      "relation": "\"transform\".\"main_intermediate\".\"int_security_fundamentals\""
+    },
+    {
+      "id": "model.marketforge.mart_company_snapshot",
+      "name": "mart_company_snapshot",
+      "type": "model",
+      "path": "models/marts/mart_company_snapshot.sql",
+      "relation": "\"transform\".\"main_marts\".\"mart_company_snapshot\""
+    },
+    {
+      "id": "model.marketforge.mart_market_daily",
+      "name": "mart_market_daily",
+      "type": "model",
+      "path": "models/marts/mart_market_daily.sql",
+      "relation": "\"transform\".\"main_marts\".\"mart_market_daily\""
+    },
+    {
+      "id": "model.marketforge.mart_pipeline_dataset_health",
+      "name": "mart_pipeline_dataset_health",
+      "type": "model",
+      "path": "models/marts/mart_pipeline_dataset_health.sql",
+      "relation": "\"transform\".\"main_marts\".\"mart_pipeline_dataset_health\""
+    },
+    {
+      "id": "model.marketforge.mart_security_daily",
+      "name": "mart_security_daily",
+      "type": "model",
+      "path": "models/marts/mart_security_daily.sql",
+      "relation": "\"transform\".\"main_marts\".\"mart_security_daily\""
+    },
+    {
+      "id": "model.marketforge.stg_earnings",
+      "name": "stg_earnings",
+      "type": "model",
+      "path": "models/staging/stg_earnings.sql",
+      "relation": "\"transform\".\"main_staging\".\"stg_earnings\""
+    },
+    {
+      "id": "model.marketforge.stg_fundamentals",
+      "name": "stg_fundamentals",
+      "type": "model",
+      "path": "models/staging/stg_fundamentals.sql",
+      "relation": "\"transform\".\"main_staging\".\"stg_fundamentals\""
+    },
+    {
+      "id": "model.marketforge.stg_macro",
+      "name": "stg_macro",
+      "type": "model",
+      "path": "models/staging/stg_macro.sql",
+      "relation": "\"transform\".\"main_staging\".\"stg_macro\""
+    },
+    {
+      "id": "model.marketforge.stg_news",
+      "name": "stg_news",
+      "type": "model",
+      "path": "models/staging/stg_news.sql",
+      "relation": "\"transform\".\"main_staging\".\"stg_news\""
+    },
+    {
+      "id": "model.marketforge.stg_prices",
+      "name": "stg_prices",
+      "type": "model",
+      "path": "models/staging/stg_prices.sql",
+      "relation": "\"transform\".\"main_staging\".\"stg_prices\""
+    },
+    {
+      "id": "source.marketforge.raw.earnings",
+      "name": "earnings",
+      "type": "source",
+      "path": "models/staging/_sources.yml",
+      "relation": "\"transform\".\"main\".\"raw_earnings\"",
+      "raw_pattern": "data/raw/earnings/year=*/month=*/*.parquet",
+      "external_sources": []
+    },
+    {
+      "id": "source.marketforge.raw.fundamentals",
+      "name": "fundamentals",
+      "type": "source",
+      "path": "models/staging/_sources.yml",
+      "relation": "\"transform\".\"main\".\"raw_fundamentals\"",
+      "raw_pattern": "data/raw/fundamentals/year=*/month=*/*.parquet",
+      "external_sources": []
+    },
+    {
+      "id": "source.marketforge.raw.macro",
+      "name": "macro",
+      "type": "source",
+      "path": "models/staging/_sources.yml",
+      "relation": "\"transform\".\"main\".\"raw_macro\"",
+      "raw_pattern": "data/raw/macro/year=*/month=*/*.parquet",
+      "external_sources": []
+    },
+    {
+      "id": "source.marketforge.raw.news",
+      "name": "news",
+      "type": "source",
+      "path": "models/staging/_sources.yml",
+      "relation": "\"transform\".\"main\".\"raw_news\"",
+      "raw_pattern": "data/raw/news/year=*/month=*/*.parquet",
+      "external_sources": []
+    },
+    {
+      "id": "source.marketforge.raw.prices",
+      "name": "prices",
+      "type": "source",
+      "path": "models/staging/_sources.yml",
+      "relation": "\"transform\".\"main\".\"raw_prices\"",
+      "raw_pattern": "data/raw/prices/year=*/month=*/*.parquet",
+      "external_sources": [
+        "synthetic-example",
+        "tiingo"
+      ],
+      "dataset_build_id": "6f510466e32e3344e6940e94d5ff764b392965019908a897a27345cce9e3e433",
+      "source_partitions": 207,
+      "pipeline_run_ids": [
+        "31f586fc-c8a4-4185-9261-1a83ada897c4",
+        "f1459c59-594d-495d-a27f-a130ac8a5787",
+        "tiingo-aapl-20210101-20260810",
+        "tiingo-universe-batch-01"
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from": "model.marketforge.int_daily_returns",
+      "to": "model.marketforge.int_rolling_volatility"
+    },
+    {
+      "from": "model.marketforge.int_daily_returns",
+      "to": "model.marketforge.mart_market_daily"
+    },
+    {
+      "from": "model.marketforge.int_earnings_surprises",
+      "to": "model.marketforge.mart_company_snapshot"
+    },
+    {
+      "from": "model.marketforge.int_rolling_volatility",
+      "to": "model.marketforge.mart_security_daily"
+    },
+    {
+      "from": "model.marketforge.stg_earnings",
+      "to": "model.marketforge.int_earnings_surprises"
+    },
+    {
+      "from": "model.marketforge.stg_earnings",
+      "to": "model.marketforge.mart_pipeline_dataset_health"
+    },
+    {
+      "from": "model.marketforge.stg_fundamentals",
+      "to": "model.marketforge.int_security_fundamentals"
+    },
+    {
+      "from": "model.marketforge.stg_fundamentals",
+      "to": "model.marketforge.mart_company_snapshot"
+    },
+    {
+      "from": "model.marketforge.stg_fundamentals",
+      "to": "model.marketforge.mart_pipeline_dataset_health"
+    },
+    {
+      "from": "model.marketforge.stg_macro",
+      "to": "model.marketforge.int_macro_aligned"
+    },
+    {
+      "from": "model.marketforge.stg_macro",
+      "to": "model.marketforge.mart_pipeline_dataset_health"
+    },
+    {
+      "from": "model.marketforge.stg_news",
+      "to": "model.marketforge.mart_pipeline_dataset_health"
+    },
+    {
+      "from": "model.marketforge.stg_prices",
+      "to": "model.marketforge.int_daily_returns"
+    },
+    {
+      "from": "model.marketforge.stg_prices",
+      "to": "model.marketforge.int_macro_aligned"
+    },
+    {
+      "from": "model.marketforge.stg_prices",
+      "to": "model.marketforge.mart_company_snapshot"
+    },
+    {
+      "from": "model.marketforge.stg_prices",
+      "to": "model.marketforge.mart_pipeline_dataset_health"
+    },
+    {
+      "from": "source.marketforge.raw.earnings",
+      "to": "model.marketforge.stg_earnings"
+    },
+    {
+      "from": "source.marketforge.raw.fundamentals",
+      "to": "model.marketforge.stg_fundamentals"
+    },
+    {
+      "from": "source.marketforge.raw.macro",
+      "to": "model.marketforge.stg_macro"
+    },
+    {
+      "from": "source.marketforge.raw.news",
+      "to": "model.marketforge.stg_news"
+    },
+    {
+      "from": "source.marketforge.raw.prices",
+      "to": "model.marketforge.stg_prices"
+    }
+  ]
+}

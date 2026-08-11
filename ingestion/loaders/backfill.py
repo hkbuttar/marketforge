@@ -27,6 +27,7 @@ from ingestion.contracts.base import (
     utc_datetime,
     write_quarantine,
 )
+from quality.reconciliation import ReconciliationError, reconcile_run
 
 
 EVENT_FIELDS = {
@@ -70,6 +71,12 @@ class BackfillResult:
     arrival_time: str | None = None
     prior_event_watermark: str | None = None
     contract_version: int = 1
+    records_written: int = 0
+    pre_write_row_count: int = 0
+    post_write_row_count: int = 0
+    expected_row_delta: int = 0
+    actual_row_delta: int = 0
+    reconciliation_status: str = "passed"
 
 
 class IdempotencyConflictError(RuntimeError):
@@ -191,6 +198,16 @@ def _write_manifest(result: BackfillResult, metadata_root: Path) -> Path:
     return target
 
 
+def _write_reconciliation_audit(run_id: str, payload: Mapping[str, Any], metadata_root: Path) -> Path:
+    audit_root = metadata_root.parent / "reconciliation"
+    audit_root.mkdir(parents=True, exist_ok=True)
+    target = audit_root / f"{run_id}.json"
+    temporary = target.with_suffix(".tmp")
+    temporary.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    os.replace(temporary, target)
+    return target
+
+
 def run_backfill(
     dataset: str,
     records: Iterable[Mapping[str, Any]],
@@ -237,6 +254,7 @@ def run_backfill(
     )
     write_quarantine(validation.rejected, quarantine_root)
     existing = _existing_rows(raw_root / dataset, contract)
+    pre_write_row_count = len(existing)
     value_fields = tuple(
         field for field in contract.fields if field not in {"ingested_at", "source_record_id"}
         or field in contract.idempotency_by
@@ -282,6 +300,16 @@ def run_backfill(
         _promote_partition(staging_target, final_target, failure_hook)
         written.append(final_target)
 
+    post_write_row_count = len(_existing_rows(raw_root / dataset, contract))
+    reconciliation = reconcile_run(
+        fetched=len(supplied), accepted=len(new_rows), rejected=len(validation.rejected),
+        deduplicated=duplicate_rows, written=len(new_rows),
+        pre_write_rows=pre_write_row_count, post_write_rows=post_write_row_count,
+    )
+    _write_reconciliation_audit(run_id, asdict(reconciliation), metadata_root)
+    if reconciliation.status != "passed":
+        raise ReconciliationError("; ".join(reconciliation.discrepancies))
+
     if failure_hook:
         failure_hook("before_manifest", metadata_root / f"{run_id}.json")
 
@@ -321,6 +349,12 @@ def run_backfill(
         arrival_time=started_at.isoformat(),
         prior_event_watermark=late_event_cutoff.isoformat() if late_event_cutoff else None,
         contract_version=contract.version,
+        records_written=len(new_rows),
+        pre_write_row_count=pre_write_row_count,
+        post_write_row_count=post_write_row_count,
+        expected_row_delta=reconciliation.expected_row_delta,
+        actual_row_delta=reconciliation.actual_row_delta,
+        reconciliation_status=reconciliation.status,
     )
     _write_manifest(result, metadata_root)
     return result

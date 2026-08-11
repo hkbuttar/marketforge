@@ -83,6 +83,17 @@ class BackfillTests(unittest.TestCase):
             ]
             first = run_backfill("prices", rows, run_id="first", **options)
             self.assertEqual((first.accepted_rows, first.quarantined_rows, first.files_written), (2, 1, 2))
+            self.assertEqual(first.input_rows, 3)
+            self.assertEqual(first.records_written, 2)
+            self.assertEqual(first.reconciliation_status, "passed")
+            self.assertEqual(first.pre_write_row_count, 0)
+            self.assertEqual(first.post_write_row_count, 2)
+            audit = json.loads((root / "reconciliation/first.json").read_text())
+            self.assertEqual(audit["source_records_fetched"], 3)
+            self.assertEqual(audit["records_accepted"], 2)
+            self.assertEqual(audit["records_rejected"], 1)
+            self.assertEqual(audit["records_deduplicated"], 0)
+            self.assertEqual(audit["status"], "passed")
             files = sorted((root / "raw").glob("**/*.parquet"))
             self.assertIn("year=2026/month=01", str(files[0]))
             count = duckdb.connect().execute(
@@ -96,6 +107,9 @@ class BackfillTests(unittest.TestCase):
             self.assertEqual(second.accepted_rows, 0)
             self.assertEqual(second.duplicate_rows, 2)
             self.assertEqual(second.files_written, 0)
+            self.assertEqual(second.pre_write_row_count, 2)
+            self.assertEqual(second.post_write_row_count, 2)
+            self.assertEqual(second.actual_row_delta, 0)
             manifest = json.loads((root / "metadata" / "second.json").read_text())
             self.assertEqual(manifest["status"], "success")
 

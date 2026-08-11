@@ -15,7 +15,6 @@ from typing import Callable
 import duckdb
 
 from ingestion.contracts import CONTRACTS
-from ingestion.loaders.backfill import DUCKDB_TYPES
 
 
 class CompactionError(RuntimeError):

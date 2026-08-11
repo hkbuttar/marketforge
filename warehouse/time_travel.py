@@ -78,7 +78,27 @@ def create_catalog(plan: dict[str, Any], target: Path) -> dict[str, Any]:
         grouped[item["dataset"]].append(item)
     target.parent.mkdir(parents=True, exist_ok=True)
     if target.exists():
-        raise FileExistsError(f"historical catalog already exists: {target}")
+        try:
+            with duckdb.connect(str(target), read_only=True) as connection:
+                existing_build = connection.execute(
+                    "SELECT payload->>'build_id' FROM reproduction_metadata"
+                ).fetchone()[0]
+                counts = {
+                    dataset: connection.execute(f'SELECT count(*) FROM raw."{dataset}"').fetchone()[0]
+                    for dataset in grouped
+                }
+        except duckdb.Error as exc:
+            raise ReproductionError(f"existing historical catalog is invalid: {target}: {exc}") from exc
+        expected_counts = {
+            dataset: sum(int(item["row_count"]) for item in items)
+            for dataset, items in grouped.items()
+        }
+        if existing_build != plan["build_id"] or counts != expected_counts:
+            raise ReproductionError(
+                f"existing historical catalog does not match build {plan['build_id']}: {target}"
+            )
+        return {"catalog": str(target), "dataset_rows": counts,
+                "bytes": target.stat().st_size, "reused": True}
     temporary = target.with_suffix(".tmp.duckdb")
     counts = {}
     try:
@@ -109,4 +129,5 @@ def create_catalog(plan: dict[str, Any], target: Path) -> dict[str, Any]:
         temporary.unlink(missing_ok=True)
         temporary.with_suffix(temporary.suffix + ".wal").unlink(missing_ok=True)
         raise
-    return {"catalog": str(target), "dataset_rows": counts, "bytes": target.stat().st_size}
+    return {"catalog": str(target), "dataset_rows": counts,
+            "bytes": target.stat().st_size, "reused": False}

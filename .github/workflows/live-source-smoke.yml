@@ -1,0 +1,44 @@
+name: Live source smoke test
+
+on:
+  workflow_dispatch:
+    inputs:
+      ticker:
+        description: Tiingo ticker
+        required: true
+        default: AAPL
+      start:
+        description: Start date (YYYY-MM-DD)
+        required: true
+      end:
+        description: End date (YYYY-MM-DD)
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  tiingo-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Fetch bounded live sample
+        env:
+          TIINGO_API_KEY: ${{ secrets.TIINGO_API_KEY }}
+          TICKER: ${{ inputs.ticker }}
+          START_DATE: ${{ inputs.start }}
+          END_DATE: ${{ inputs.end }}
+        run: >-
+          python -m scripts.load_tiingo
+          --tickers "$TICKER"
+          --start "$START_DATE"
+          --end "$END_DATE"
+          --run-id ci-live-tiingo
+      - name: Verify resulting contract artifacts
+        run: python -m unittest tests.unit.test_tiingo_source tests.integration.test_backfill -v

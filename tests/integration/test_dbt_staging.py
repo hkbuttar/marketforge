@@ -10,6 +10,7 @@ from pathlib import Path
 import duckdb
 
 from ingestion.loaders import run_backfill
+from ingestion.sources.files import read_records
 
 
 DBT = shutil.which("dbt") or str(Path(sys.executable).parent / "dbt")
@@ -23,30 +24,15 @@ NOW = datetime(2026, 8, 11, tzinfo=timezone.utc)
 class DbtStagingTests(unittest.TestCase):
     def test_all_staging_models_build_and_normalize(self):
         records = {
-            "prices": [
-                {"symbol": "aapl", "date": "2026-08-07", "open": 99, "high": 101,
-                 "low": 98, "close": 100, "volume": 9, "source_record_id": "p0"},
-                {"symbol": "aapl", "date": "2026-08-10", "open": 100, "high": 102,
-                 "low": 99, "close": 101, "volume": 10, "source_record_id": "p1"},
-            ],
-            "fundamentals": {"symbol": "aapl", "metric_name": "Revenue", "period_start": "2026-04-01",
-                             "period_end": "2026-06-30", "period_type": "quarter", "filed_at": "2026-08-01T00:00:00Z",
-                             "value": 1.0, "unit": "usd", "currency": "usd", "source_record_id": "f1"},
-            "earnings": {"symbol": "aapl", "event_timestamp": "2026-08-01T00:00:00Z",
-                         "fiscal_period_end": "2026-06-30", "event_status": "reported",
-                         "eps_estimate": 1.0, "eps_actual": 1.1, "source_record_id": "e1"},
-            "macro": {"series_id": "cpi", "observation_date": "2026-07-01",
-                      "released_at": "2026-08-01T00:00:00Z", "value": 100, "unit": "index",
-                      "frequency": "monthly", "source_record_id": "m1"},
-            "news": {"event_timestamp": "2026-08-01T00:00:00Z", "headline": " Example headline ",
-                     "url": "https://example.com/story", "publisher": "Example", "source_record_id": "n1"},
+            dataset: read_records(str(ROOT / f"tests/fixtures/ci/{dataset}.jsonl"))
+            for dataset in ("prices", "fundamentals", "earnings", "macro", "news")
         }
         with tempfile.TemporaryDirectory() as directory:
             temp = Path(directory)
             raw = temp / "raw"
             for dataset, record in records.items():
                 run_backfill(
-                    dataset, record if isinstance(record, list) else [record],
+                    dataset, record,
                     source="Test-Provider", raw_root=raw,
                     quarantine_root=temp / "quarantine", metadata_root=temp / "metadata",
                     run_id=f"dbt-{dataset}", now=NOW,

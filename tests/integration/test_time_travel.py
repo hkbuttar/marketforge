@@ -27,6 +27,9 @@ class TimeTravelTests(unittest.TestCase):
             target = root / "history/build.duckdb"
             result = create_catalog(plan, target)
             self.assertEqual(result["dataset_rows"], {"prices": 1})
+            self.assertFalse(result["reused"])
+            replay = create_catalog(plan, target)
+            self.assertTrue(replay["reused"])
             with duckdb.connect(str(target), read_only=True) as connection:
                 self.assertEqual(connection.execute("SELECT symbol FROM raw.prices").fetchone()[0], "AAPL")
 

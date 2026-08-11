@@ -2,6 +2,7 @@ __pycache__/
 *.py[cod]
 benchmarks/results.jsonl
 benchmarks/results/
+demo/results/
 data/quarantine/
 data/raw/
 data/archive/

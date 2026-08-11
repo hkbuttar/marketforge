@@ -71,6 +71,7 @@ class SyntheticFailureDatasetTests(unittest.TestCase):
                 run_id="late", now=datetime(2026, 8, 11, tzinfo=timezone.utc),
             )
             self.assertEqual(result.backfill.late_arriving_rows, 1)
+            self.assertEqual(result.checkpoint_event_date, date(2026, 8, 10))
             self.assertEqual(
                 store.get("prices", "synthetic-failure").last_successful_event_date,
                 date(2026, 8, 10),

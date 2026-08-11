@@ -107,6 +107,8 @@ def run_incremental(
     )
     checkpoint_date = checkpoint.last_successful_event_date if checkpoint else None
     if result.max_event_date is not None:
-        checkpoint_date = date.fromisoformat(result.max_event_date)
-        checkpoint_store.advance(dataset, source, checkpoint_date, result.run_id)
+        advanced = checkpoint_store.advance(
+            dataset, source, date.fromisoformat(result.max_event_date), result.run_id
+        )
+        checkpoint_date = advanced.last_successful_event_date
     return IncrementalResult(fetch_from, through, len(selected), result, checkpoint_date)

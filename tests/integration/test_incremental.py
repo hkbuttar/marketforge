@@ -44,6 +44,7 @@ class IncrementalTests(unittest.TestCase):
             self.assertEqual(late.backfill.earliest_late_event_date, "2026-07-15")
             self.assertEqual(late.backfill.prior_event_watermark, "2026-07-17")
             self.assertEqual(late.backfill.arrival_time, "2026-07-18T22:00:00+00:00")
+            self.assertEqual(late.checkpoint_event_date, date(2026, 7, 18))
             july_files = list((root / "raw/prices/year=2026/month=07").glob("*.parquet"))
             self.assertEqual(len(july_files), 2)
             manifest = json.loads((root / "runs/late-arrival.json").read_text())

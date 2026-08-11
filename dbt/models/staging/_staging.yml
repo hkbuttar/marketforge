@@ -1,0 +1,28 @@
+version: 2
+
+models:
+  - name: stg_prices
+    description: "Validated, normalized, deduplicated daily price bars."
+    columns:
+      - name: price_bar_key
+        data_tests: [not_null, unique]
+      - name: symbol
+        data_tests: [not_null]
+      - name: trade_date
+        data_tests: [not_null]
+  - name: stg_fundamentals
+    columns:
+      - name: fundamental_observation_key
+        data_tests: [not_null, unique]
+  - name: stg_macro
+    columns:
+      - name: macro_observation_key
+        data_tests: [not_null, unique]
+  - name: stg_earnings
+    columns:
+      - name: earnings_event_key
+        data_tests: [not_null, unique]
+  - name: stg_news
+    columns:
+      - name: news_event_key
+        data_tests: [not_null, unique]

@@ -5,4 +5,8 @@ data/quarantine/
 data/raw/
 warehouse/metadata/ingestion_runs/
 warehouse/metadata/checkpoints.sqlite*
-.venv/
+warehouse/duckdb/*.duckdb*
+dbt/target/
+dbt/logs/
+dbt/dbt_packages/
+.venv*/

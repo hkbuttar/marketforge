@@ -57,3 +57,6 @@ crash windows and recovery behavior are detailed in
 
 DuckDB queries Parquet directly through reusable raw views. Analytical benchmark
 methodology and results are in [`docs/duckdb_analytics.md`](docs/duckdb_analytics.md).
+
+The dbt transformation project begins with normalized, deduplicated staging views
+for every initial dataset. See [`docs/dbt_staging.md`](docs/dbt_staging.md).

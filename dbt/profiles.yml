@@ -1,0 +1,11 @@
+marketforge:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      # Commands are run from the repository root as documented.
+      path: "warehouse/duckdb/marketforge.duckdb"
+      threads: 2
+      settings:
+        memory_limit: "4GB"
+        threads: 2

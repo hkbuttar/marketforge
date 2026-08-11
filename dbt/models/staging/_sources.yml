@@ -1,0 +1,16 @@
+version: 2
+
+sources:
+  - name: raw
+    schema: main
+    tables:
+      - name: prices
+        identifier: raw_prices
+      - name: fundamentals
+        identifier: raw_fundamentals
+      - name: earnings
+        identifier: raw_earnings
+      - name: macro
+        identifier: raw_macro
+      - name: news
+        identifier: raw_news

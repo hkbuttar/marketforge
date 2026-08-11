@@ -6,6 +6,7 @@ data/raw/
 warehouse/metadata/ingestion_runs/
 warehouse/metadata/checkpoints.sqlite*
 warehouse/metadata/operational.sqlite*
+warehouse/metadata/dataset_builds/
 warehouse/duckdb/*.duckdb*
 dbt/target/
 dbt/logs/

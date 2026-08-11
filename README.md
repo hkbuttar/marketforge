@@ -36,3 +36,10 @@ Executable contracts for every initial source domain live in
 [`ingestion/contracts`](ingestion/contracts). They normalize accepted records and
 route violations into immutable quarantine artifacts as described in
 [`docs/source_contracts.md`](docs/source_contracts.md).
+
+## Historical backfills
+
+The backfill CLI validates and deduplicates bounded source extracts before writing
+immutable, Zstandard-compressed, year/month Parquet partitions. Usage, run metadata,
+and the partition-layout decision are documented in
+[`docs/historical_backfill.md`](docs/historical_backfill.md).

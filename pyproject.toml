@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "marketforge"
+version = "0.1.0"
+description = "Local-first analytical data platform"
+requires-python = ">=3.11"
+dependencies = ["duckdb>=1.0,<2"]
+
+[project.scripts]
+marketforge-ingest = "ingestion.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["ingestion*"]

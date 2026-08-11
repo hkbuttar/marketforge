@@ -1,0 +1,21 @@
+{
+  "dataset": "prices",
+  "source": "tiingo",
+  "event_date": "2026-08-10",
+  "status": "HEALTHY",
+  "reason": "all configured distribution checks passed",
+  "baseline_days": 60,
+  "expected_symbols": 49,
+  "observed_symbols": 49,
+  "missing_symbols": [],
+  "metrics": {
+    "row_count": 49.0,
+    "null_rate": 0.0,
+    "median_volume": 6094786.0,
+    "median_price": 278.09,
+    "zero_volume_fraction": 0.0,
+    "return_dispersion": 0.016274356999309944,
+    "missing_symbol_fraction": 0.0
+  },
+  "findings": []
+}

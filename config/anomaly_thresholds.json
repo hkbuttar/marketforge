@@ -1,0 +1,12 @@
+{
+  "robust_z_warn": 4.0,
+  "robust_z_fail": 8.0,
+  "null_rate_warn": 0.001,
+  "null_rate_fail": 0.01,
+  "zero_volume_warn": 0.05,
+  "zero_volume_fail": 0.20,
+  "missing_symbol_warn": 0.01,
+  "missing_symbol_fail": 0.05,
+  "minimum_baseline_days": 20,
+  "baseline_days": 60
+}

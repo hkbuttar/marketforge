@@ -1,0 +1,12 @@
+{
+  "dataset": "fundamentals",
+  "status": "UNKNOWN",
+  "reason": "no source check evidence",
+  "basis": "source_check",
+  "cadence": "daily source check; quarterly events",
+  "age_hours": null,
+  "evaluated_at": "2026-08-11T17:48:21.275802+00:00",
+  "latest_event_time": null,
+  "last_source_check_at": null,
+  "expected_event_time": null
+}

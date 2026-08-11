@@ -1,0 +1,12 @@
+{
+  "dataset": "macro",
+  "status": "UNKNOWN",
+  "reason": "no source check evidence",
+  "basis": "source_check",
+  "cadence": "daily publication-calendar check",
+  "age_hours": null,
+  "evaluated_at": "2026-08-11T17:48:21.276106+00:00",
+  "latest_event_time": null,
+  "last_source_check_at": null,
+  "expected_event_time": null
+}

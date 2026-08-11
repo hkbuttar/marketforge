@@ -182,6 +182,9 @@ def _stage_partition(
 
 def _promote_partition(staging_target: Path, final_target: Path, failure_hook: FailureHook | None) -> None:
     final_target.parent.mkdir(parents=True, exist_ok=True)
+    compaction_lock = final_target.parent.with_name(final_target.parent.name + ".compaction.lock")
+    if compaction_lock.exists():
+        raise RuntimeError(f"partition is locked for compaction: {final_target.parent}")
     if final_target.exists():
         raise FileExistsError(f"immutable raw artifact already exists: {final_target}")
     os.replace(staging_target, final_target)

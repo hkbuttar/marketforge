@@ -3,6 +3,8 @@ __pycache__/
 benchmarks/results.jsonl
 data/quarantine/
 data/raw/
+data/archive/
+warehouse/metadata/compactions/
 warehouse/metadata/ingestion_runs/
 warehouse/metadata/checkpoints.sqlite*
 warehouse/metadata/operational.sqlite*

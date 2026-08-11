@@ -62,6 +62,25 @@ def _dbt_run_id(repo_root: Path) -> str | None:
     return payload.get("metadata", {}).get("invocation_id")
 
 
+def _resolve_artifact(path: Path, item: dict[str, Any], repo_root: Path) -> Path:
+    if path.exists():
+        return path
+    compactions = repo_root / "warehouse/metadata/compactions"
+    for metadata in sorted(compactions.glob("*.json"), reverse=True):
+        try:
+            value = json.loads(metadata.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        if value.get("dataset") != item.get("dataset") or value.get("partition") != item.get("partition"):
+            continue
+        archive = Path(value.get("archive", ""))
+        archive = archive if archive.is_absolute() else repo_root / archive
+        candidate = archive / path.name
+        if candidate.is_file():
+            return candidate
+    return path
+
+
 def _source_partitions(raw_root: Path, datasets: set[str], repo_root: Path) -> list[dict[str, Any]]:
     partitions = []
     for path in sorted(raw_root.glob("*/year=*/month=*/*.parquet")):
@@ -136,6 +155,7 @@ def verify_build_manifest(manifest_path: Path, repo_root: Path) -> list[str]:
     for item in manifest["source_partitions"]:
         path = Path(item["artifact"])
         path = path if path.is_absolute() else repo_root / path
+        path = _resolve_artifact(path, item, repo_root)
         if not path.exists():
             errors.append(f"source artifact missing: {item['artifact']}")
         elif _file_hash(path) != item["content_hash"]:

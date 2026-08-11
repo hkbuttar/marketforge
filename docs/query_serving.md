@@ -16,10 +16,19 @@ database and lineage artifact. Available routes are:
 - `GET /api/pipeline/health`
 - `GET /api/datasets`
 - `GET /api/datasets/{dataset}/lineage`
+- `GET /health/live`
+- `GET /health/ready`
 
 Limits are validated and capped. Symbols and sources are bound parameters. Missing
 published marts return HTTP 503; missing entities return HTTP 404. Interactive
 OpenAPI documentation is available at `/docs` while the server is running.
+
+`/health/live` only confirms that the API process can respond. `/health/ready`
+performs read-only checks against DuckDB, the three required published marts, and
+the SQLite operational metadata store. It returns HTTP 503 with component details
+if any dependency is unavailable. Data freshness is deliberately excluded from
+readiness and remains visible at `/api/pipeline/health`; stale data does not mean
+the HTTP process or its query dependencies are broken.
 
 ## Cache
 

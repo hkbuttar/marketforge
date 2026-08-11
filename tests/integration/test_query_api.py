@@ -1,6 +1,7 @@
 import json
 import tempfile
 import unittest
+import sqlite3
 from pathlib import Path
 
 import duckdb
@@ -35,7 +36,14 @@ class QueryApiTests(unittest.TestCase):
         lineage.write_text(json.dumps({"generated_at": "2026-08-11T00:00:00+00:00", "nodes": [
             {"id": "source.marketforge.raw.prices", "name": "prices", "type": "source",
              "path": "sources.yml", "relation": "raw_prices"}], "edges": []}))
-        self.client = TestClient(create_app(database=database, lineage_path=lineage))
+        metadata = root / "operational.sqlite"
+        with sqlite3.connect(metadata) as connection:
+            connection.execute("CREATE TABLE marker (value INTEGER)")
+        self.database = database
+        self.lineage = lineage
+        self.metadata = metadata
+        self.client = TestClient(create_app(
+            database=database, lineage_path=lineage, metadata_store=metadata))
 
     def tearDown(self):
         self.temporary.cleanup()
@@ -53,8 +61,27 @@ class QueryApiTests(unittest.TestCase):
         self.assertEqual(self.client.get("/api/securities?limit=501").status_code, 422)
 
     def test_missing_database_is_service_unavailable(self):
-        client = TestClient(create_app(database=Path(self.temporary.name) / "missing.duckdb"))
+        client = TestClient(create_app(database=Path(self.temporary.name) / "missing.duckdb",
+                                       metadata_store=self.metadata))
         self.assertEqual(client.get("/api/securities").status_code, 503)
+
+    def test_liveness_is_independent_from_readiness(self):
+        self.assertEqual(self.client.get("/health/live").json()["status"], "alive")
+        ready = self.client.get("/health/ready")
+        self.assertEqual(ready.status_code, 200)
+        self.assertEqual(ready.json()["status"], "ready")
+        self.assertEqual({item["component"] for item in ready.json()["checks"]},
+                         {"duckdb", "required_marts", "metadata_store"})
+
+    def test_readiness_fails_but_liveness_survives_missing_dependencies(self):
+        client = TestClient(create_app(
+            database=Path(self.temporary.name) / "missing.duckdb",
+            lineage_path=self.lineage,
+            metadata_store=Path(self.temporary.name) / "missing.sqlite"))
+        self.assertEqual(client.get("/health/live").status_code, 200)
+        response = client.get("/health/ready")
+        self.assertEqual(response.status_code, 503)
+        self.assertEqual(response.json()["status"], "not_ready")
 
 
 if __name__ == "__main__":

@@ -3,22 +3,43 @@
 from __future__ import annotations
 
 import os
+from datetime import datetime, timezone
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, HTTPException, Query, Request
 
 from backend.schemas import (
-    DatasetHealthList, DatasetList, DatasetSummary, LineageResponse, PageMeta,
-    SecurityDetail, SecurityHistory, SecurityList,
+    DatasetHealthList, DatasetList, DatasetSummary, LineageResponse,
+    LivenessResponse, ReadinessResponse, SecurityDetail, SecurityHistory, SecurityList,
 )
+from backend.services.health import readiness
 from backend.services.query import MartUnavailable, QueryService
 
 
-def create_app(*, database: Path | None = None, lineage_path: Path | None = None) -> FastAPI:
+def create_app(*, database: Path | None = None, lineage_path: Path | None = None,
+               metadata_store: Path | None = None) -> FastAPI:
     database = database or Path(os.getenv("MARKETFORGE_DATABASE", "warehouse/duckdb/marketforge.duckdb"))
     lineage_path = lineage_path or Path(os.getenv("MARKETFORGE_LINEAGE", "warehouse/metadata/lineage.json"))
+    metadata_store = metadata_store or Path(os.getenv(
+        "MARKETFORGE_METADATA_STORE", "warehouse/metadata/operational.sqlite"))
     app = FastAPI(title="MarketForge API", version="0.1.0")
     app.state.query_service = QueryService(database, lineage_path)
+
+    @app.get("/health/live", response_model=LivenessResponse)
+    def live():
+        return {"status": "alive", "checked_at": datetime.now(timezone.utc)}
+
+    @app.get("/health/ready", response_model=ReadinessResponse)
+    def ready(request: Request):
+        checks = readiness(database, metadata_store)
+        is_ready = all(check["status"] == "ready" for check in checks)
+        body = {"status": "ready" if is_ready else "not_ready",
+                "checked_at": datetime.now(timezone.utc), "checks": checks,
+                "cache": request.app.state.query_service.cache_stats()}
+        if not is_ready:
+            from fastapi.responses import JSONResponse
+            return JSONResponse(status_code=503, content=ReadinessResponse(**body).model_dump(mode="json"))
+        return body
 
     def service(request: Request) -> QueryService:
         return request.app.state.query_service

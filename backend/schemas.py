@@ -87,3 +87,21 @@ class LineageResponse(ApiModel):
     nodes: list[dict[str, Any]]
     edges: list[dict[str, str]]
     generated_at: datetime
+
+
+class LivenessResponse(ApiModel):
+    status: str
+    checked_at: datetime
+
+
+class ComponentCheck(ApiModel):
+    component: str
+    status: str
+    detail: str
+
+
+class ReadinessResponse(ApiModel):
+    status: str
+    checked_at: datetime
+    checks: list[ComponentCheck]
+    cache: dict[str, int | float]

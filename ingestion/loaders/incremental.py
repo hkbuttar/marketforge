@@ -10,7 +10,7 @@ from typing import Any, Iterable, Mapping
 from ingestion.checkpoints import CheckpointStore
 from ingestion.contracts import CONTRACTS
 from ingestion.contracts.base import iso_date, utc_datetime
-from ingestion.loaders.backfill import BackfillResult, EVENT_FIELDS, run_backfill
+from ingestion.loaders.backfill import BackfillResult, EVENT_FIELDS, FailureHook, run_backfill
 
 
 @dataclass(frozen=True)
@@ -47,6 +47,7 @@ def run_incremental(
     metadata_root: Path = Path("warehouse/metadata/ingestion_runs"),
     run_id: str | None = None,
     now: datetime | None = None,
+    failure_hook: FailureHook | None = None,
 ) -> IncrementalResult:
     if dataset not in CONTRACTS:
         raise ValueError(f"unknown dataset {dataset!r}")
@@ -87,6 +88,7 @@ def run_incremental(
         metadata_root=metadata_root,
         run_id=run_id,
         now=now,
+        failure_hook=failure_hook,
     )
     checkpoint_date = checkpoint.last_successful_event_date if checkpoint else None
     if result.max_event_date is not None:

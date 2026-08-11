@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import uuid
 from collections import defaultdict
 from dataclasses import asdict, dataclass
@@ -12,6 +13,7 @@ from datetime import date, datetime, timezone
 from pathlib import Path
 from time import monotonic
 from typing import Any, Iterable, Mapping
+from typing import Callable
 
 import duckdb
 
@@ -66,6 +68,10 @@ class IdempotencyConflictError(RuntimeError):
     """An existing logical key was replayed with different canonical values."""
 
 
+FailureHook = Callable[[str, Path], None]
+RUN_ID_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
+
+
 def _stable_record_id(row: Mapping[str, Any]) -> str:
     encoded = json.dumps(row, sort_keys=True, separators=(",", ":"), default=str).encode()
     return hashlib.sha256(encoded).hexdigest()
@@ -100,10 +106,39 @@ def _existing_rows(dataset_root: Path, contract) -> dict[tuple[Any, ...], tuple[
     return existing
 
 
-def _write_partition(contract, rows: list[dict[str, Any]], target: Path) -> None:
-    target.parent.mkdir(parents=True, exist_ok=True)
-    if target.exists():
-        raise FileExistsError(f"immutable raw artifact already exists: {target}")
+def _validate_parquet(contract, rows: list[dict[str, Any]], target: Path) -> None:
+    with duckdb.connect() as connection:
+        description = connection.execute(
+            "DESCRIBE SELECT * FROM read_parquet(?, hive_partitioning=false)", [str(target)]
+        ).fetchall()
+        actual_columns = [column[0] for column in description]
+        row_count = connection.execute(
+            "SELECT count(*) FROM read_parquet(?, hive_partitioning=false)", [str(target)]
+        ).fetchone()[0]
+    if actual_columns != list(contract.fields):
+        raise ValueError(f"staged Parquet schema mismatch: {actual_columns!r}")
+    if row_count != len(rows):
+        raise ValueError(f"staged Parquet row count {row_count} != expected {len(rows)}")
+
+
+def _stage_partition(
+    contract,
+    rows: list[dict[str, Any]],
+    staging_target: Path,
+    final_target: Path,
+    failure_hook: FailureHook | None,
+) -> None:
+    staging_target.parent.mkdir(parents=True, exist_ok=True)
+    if final_target.exists():
+        raise FileExistsError(f"immutable raw artifact already exists: {final_target}")
+    writing_target = staging_target.with_suffix(".writing")
+    # A .writing file is never canonical and may be left by a killed writer.
+    if writing_target.exists():
+        writing_target.unlink()
+    if staging_target.exists():
+        staging_target.unlink()
+    if failure_hook:
+        failure_hook("before_temp_write", writing_target)
     columns = list(contract.fields)
     definitions = ", ".join(
         f'"{name}" {DUCKDB_TYPES.get(spec.normalizer, "VARCHAR")}'
@@ -111,7 +146,7 @@ def _write_partition(contract, rows: list[dict[str, Any]], target: Path) -> None
     )
     quoted_columns = ", ".join(f'"{column}"' for column in columns)
     placeholders = ", ".join("?" for _ in columns)
-    escaped_target = str(target).replace("'", "''")
+    escaped_target = str(writing_target).replace("'", "''")
     with duckdb.connect() as connection:
         connection.execute(f"CREATE TEMP TABLE payload ({definitions})")
         connection.executemany(
@@ -122,6 +157,21 @@ def _write_partition(contract, rows: list[dict[str, Any]], target: Path) -> None
             f"COPY (SELECT {quoted_columns} FROM payload) TO '{escaped_target}' "
             "(FORMAT PARQUET, COMPRESSION ZSTD)"
         )
+    if failure_hook:
+        failure_hook("after_temp_write", writing_target)
+    _validate_parquet(contract, rows, writing_target)
+    os.replace(writing_target, staging_target)
+    if failure_hook:
+        failure_hook("after_temp_validation", staging_target)
+
+
+def _promote_partition(staging_target: Path, final_target: Path, failure_hook: FailureHook | None) -> None:
+    final_target.parent.mkdir(parents=True, exist_ok=True)
+    if final_target.exists():
+        raise FileExistsError(f"immutable raw artifact already exists: {final_target}")
+    os.replace(staging_target, final_target)
+    if failure_hook:
+        failure_hook("after_final_promotion", final_target)
 
 
 def _write_manifest(result: BackfillResult, metadata_root: Path) -> Path:
@@ -144,11 +194,14 @@ def run_backfill(
     run_id: str | None = None,
     now: datetime | None = None,
     input_bytes: int = 0,
+    failure_hook: FailureHook | None = None,
 ) -> BackfillResult:
     if dataset not in CONTRACTS:
         raise ValueError(f"unknown dataset {dataset!r}; choose from {sorted(CONTRACTS)}")
     contract = CONTRACTS[dataset]
     run_id = run_id or str(uuid.uuid4())
+    if not RUN_ID_PATTERN.fullmatch(run_id):
+        raise ValueError("run_id must contain only letters, numbers, dot, underscore, or hyphen")
     now = now or datetime.now(timezone.utc)
     if now.tzinfo is None:
         raise ValueError("now must be timezone-aware")
@@ -191,17 +244,29 @@ def run_backfill(
         event_date = event_value.date() if isinstance(event_value, datetime) else event_value
         groups[(event_date.year, event_date.month)].append(row)
 
-    written: list[Path] = []
+    staged: list[tuple[Path, Path]] = []
     for (year, month), partition_rows in sorted(groups.items()):
-        target = (
+        final_target = (
             raw_root
             / dataset
             / f"year={year:04d}"
             / f"month={month:02d}"
             / f"part-{run_id}.parquet"
         )
-        _write_partition(contract, partition_rows, target)
-        written.append(target)
+        staging_target = (
+            raw_root / ".tmp" / run_id / dataset / f"year={year:04d}" / f"month={month:02d}"
+            / f"part-{run_id}.parquet"
+        )
+        _stage_partition(contract, partition_rows, staging_target, final_target, failure_hook)
+        staged.append((staging_target, final_target))
+
+    written: list[Path] = []
+    for staging_target, final_target in staged:
+        _promote_partition(staging_target, final_target, failure_hook)
+        written.append(final_target)
+
+    if failure_hook:
+        failure_hook("before_manifest", metadata_root / f"{run_id}.json")
 
     completed_at = datetime.now(timezone.utc)
     accepted_event_dates = []

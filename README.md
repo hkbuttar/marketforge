@@ -50,3 +50,7 @@ optional revision overlap window. See
 
 Idempotency keys and replay/conflict behavior are documented and executable via
 [`docs/idempotency.md`](docs/idempotency.md).
+
+Raw Parquet writes use validated same-filesystem staging and atomic promotion;
+crash windows and recovery behavior are detailed in
+[`docs/atomic_writes.md`](docs/atomic_writes.md).

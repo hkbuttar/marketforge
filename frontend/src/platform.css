@@ -1,0 +1,15 @@
+.storage {
+  margin-top: 14px;
+}
+
+.storage .bar {
+  margin: 18px 0 12px;
+}
+
+.storage-breakdown {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  color: #71849b;
+  font: 10px "DM Mono";
+}

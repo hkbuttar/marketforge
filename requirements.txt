@@ -2,6 +2,7 @@
 duckdb>=1.0,<2
 pytz>=2024
 PyYAML>=6,<7
+hypothesis>=6,<7
 
 # Query serving
 fastapi>=0.115,<1

@@ -61,7 +61,8 @@ class DbtStagingTests(unittest.TestCase):
             )
             completed = subprocess.run(
                 [DBT, "build", "--project-dir", str(ROOT / "dbt"), "--profiles-dir", str(profiles),
-                 "--vars", json.dumps({"raw_root": str(raw)}), "--no-use-colors"],
+                 "--vars", json.dumps({"raw_root": str(raw), "metadata_root": str(temp / "metadata")}),
+                 "--no-use-colors"],
                 cwd=ROOT, text=True, capture_output=True, check=False,
             )
             self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
@@ -94,6 +95,23 @@ class DbtStagingTests(unittest.TestCase):
                        WHERE available_date > trade_date"""
                 ).fetchone()[0]
                 self.assertEqual(aligned, 0)
+                security_daily = connection.execute(
+                    """SELECT daily_return, relative_volume
+                       FROM main_marts.mart_security_daily WHERE trade_date=DATE '2026-08-10'"""
+                ).fetchone()
+                self.assertAlmostEqual(security_daily[0], 0.01)
+                self.assertAlmostEqual(security_daily[1], 10 / 9.5)
+                snapshot = connection.execute(
+                    """SELECT latest_price, available_fundamental_metrics, latest_eps_surprise
+                       FROM main_marts.mart_company_snapshot"""
+                ).fetchone()
+                self.assertEqual(snapshot[0:2], (101.0, 1))
+                self.assertAlmostEqual(snapshot[2], 0.1)
+                health = connection.execute(
+                    """SELECT count(*), count(*) filter (where status='healthy')
+                       FROM main_marts.mart_pipeline_dataset_health"""
+                ).fetchone()
+                self.assertEqual(health, (5, 5))
 
 
 if __name__ == "__main__":

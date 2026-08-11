@@ -64,3 +64,6 @@ for every initial dataset. See [`docs/dbt_staging.md`](docs/dbt_staging.md).
 Reusable return, volatility, point-in-time fundamental, earnings-surprise, and
 macro-alignment logic lives in the dbt intermediate layer described in
 [`docs/dbt_intermediate.md`](docs/dbt_intermediate.md).
+
+Consumer-facing security, market, company snapshot, and pipeline-health marts are
+documented in [`docs/dbt_marts.md`](docs/dbt_marts.md).

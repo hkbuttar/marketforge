@@ -1,0 +1,30 @@
+version: 2
+
+models:
+  - name: mart_security_daily
+    description: "Consumer-facing daily symbol analytics at source-specific grain."
+    columns:
+      - name: source_security_key
+        data_tests: [not_null]
+      - name: trade_date
+        data_tests: [not_null]
+  - name: mart_market_daily
+    description: "Cross-sectional market breadth and return statistics."
+    columns:
+      - name: trade_date
+        data_tests: [not_null, unique]
+  - name: mart_company_snapshot
+    description: "Latest price, fundamental coverage, and earnings snapshot by source symbol."
+    columns:
+      - name: source_security_key
+        data_tests: [not_null, unique]
+  - name: mart_pipeline_dataset_health
+    description: "Freshness, counts, quality, quarantine, and run state for each dataset."
+    columns:
+      - name: dataset
+        data_tests: [not_null, unique]
+      - name: status
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['healthy', 'degraded', 'empty', 'unknown']

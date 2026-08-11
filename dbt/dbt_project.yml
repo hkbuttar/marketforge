@@ -10,6 +10,7 @@ clean-targets: ["target", "dbt_packages"]
 
 on-run-start:
   - "{{ create_raw_views() }}"
+  - "{{ create_operational_views() }}"
 
 models:
   marketforge:
@@ -19,3 +20,6 @@ models:
     intermediate:
       +materialized: view
       +schema: intermediate
+    marts:
+      +materialized: table
+      +schema: marts

@@ -89,6 +89,9 @@ def run_incremental(
         run_id=run_id,
         now=now,
         failure_hook=failure_hook,
+        run_type="incremental",
+        requested_start=fetch_from,
+        requested_end=through,
     )
     checkpoint_date = checkpoint.last_successful_event_date if checkpoint else None
     if result.max_event_date is not None:

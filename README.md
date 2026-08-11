@@ -76,3 +76,6 @@ Dagster asset lineage and the four local jobs are documented in
 
 Optional laptop-safe schedules and manual commands are documented in
 [`docs/scheduling.md`](docs/scheduling.md).
+
+Explicit, overlap-safe range backfills are documented in
+[`docs/backfill_engine.md`](docs/backfill_engine.md).

@@ -62,6 +62,9 @@ class BackfillResult:
     started_at: str
     completed_at: str
     max_event_date: str | None
+    run_type: str
+    requested_start: str | None
+    requested_end: str | None
 
 
 class IdempotencyConflictError(RuntimeError):
@@ -195,6 +198,9 @@ def run_backfill(
     now: datetime | None = None,
     input_bytes: int = 0,
     failure_hook: FailureHook | None = None,
+    run_type: str = "historical_backfill",
+    requested_start: date | None = None,
+    requested_end: date | None = None,
 ) -> BackfillResult:
     if dataset not in CONTRACTS:
         raise ValueError(f"unknown dataset {dataset!r}; choose from {sorted(CONTRACTS)}")
@@ -202,6 +208,11 @@ def run_backfill(
     run_id = run_id or str(uuid.uuid4())
     if not RUN_ID_PATTERN.fullmatch(run_id):
         raise ValueError("run_id must contain only letters, numbers, dot, underscore, or hyphen")
+    if (
+        requested_start and requested_end and requested_end < requested_start
+        and run_type != "incremental"
+    ):
+        raise ValueError("requested_end must not precede requested_start")
     now = now or datetime.now(timezone.utc)
     if now.tzinfo is None:
         raise ValueError("now must be timezone-aware")
@@ -288,6 +299,9 @@ def run_backfill(
         started_at=started_at.isoformat(),
         completed_at=completed_at.isoformat(),
         max_event_date=max(accepted_event_dates).isoformat() if accepted_event_dates else None,
+        run_type=run_type,
+        requested_start=requested_start.isoformat() if requested_start else None,
+        requested_end=requested_end.isoformat() if requested_end else None,
     )
     _write_manifest(result, metadata_root)
     return result

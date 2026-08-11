@@ -353,6 +353,7 @@ a system of record. See [`docs/deployment.md`](docs/deployment.md).
 ## Documentation map
 
 - [Portfolio description](docs/portfolio_description.md)
+- [Project differentiation](docs/project_differentiation.md)
 - [Measured results](docs/results.md)
 - [Data model](docs/data_model.md)
 - [Contracts](docs/source_contracts.md)

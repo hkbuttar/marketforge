@@ -133,3 +133,4 @@ The hosted dashboard uses a separately generated 90-row read-only snapshot.
 - [End-to-end demonstration](end_to_end_demo.md)
 - [Testing evidence](testing_validation.md)
 - [Deployment boundary](deployment.md)
+- [Project differentiation](project_differentiation.md)

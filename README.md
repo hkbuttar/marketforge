@@ -43,3 +43,7 @@ The backfill CLI validates and deduplicates bounded source extracts before writi
 immutable, Zstandard-compressed, year/month Parquet partitions. Usage, run metadata,
 and the partition-layout decision are documented in
 [`docs/historical_backfill.md`](docs/historical_backfill.md).
+
+Normal operation uses a separate checkpoint-driven incremental command with an
+optional revision overlap window. See
+[`docs/incremental_ingestion.md`](docs/incremental_ingestion.md).

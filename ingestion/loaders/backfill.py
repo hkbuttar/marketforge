@@ -59,6 +59,7 @@ class BackfillResult:
     wall_clock_seconds: float
     started_at: str
     completed_at: str
+    max_event_date: str | None
 
 
 def _stable_record_id(row: Mapping[str, Any]) -> str:
@@ -170,6 +171,10 @@ def run_backfill(
         written.append(target)
 
     completed_at = datetime.now(timezone.utc)
+    accepted_event_dates = []
+    for row in validation.accepted:
+        value = row[EVENT_FIELDS[dataset]]
+        accepted_event_dates.append(value.date() if isinstance(value, datetime) else value)
     result = BackfillResult(
         run_id=run_id,
         dataset=dataset,
@@ -184,6 +189,7 @@ def run_backfill(
         wall_clock_seconds=round(monotonic() - start, 6),
         started_at=started_at.isoformat(),
         completed_at=completed_at.isoformat(),
+        max_event_date=max(accepted_event_dates).isoformat() if accepted_event_dates else None,
     )
     _write_manifest(result, metadata_root)
     return result

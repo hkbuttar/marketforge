@@ -4,4 +4,5 @@ benchmarks/results.jsonl
 data/quarantine/
 data/raw/
 warehouse/metadata/ingestion_runs/
+warehouse/metadata/checkpoints.sqlite*
 .venv/

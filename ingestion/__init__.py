@@ -1,0 +1,1 @@
+"""MarketForge ingestion primitives."""

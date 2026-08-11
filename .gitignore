@@ -1,3 +1,4 @@
 __pycache__/
 *.py[cod]
 benchmarks/results.jsonl
+data/quarantine/

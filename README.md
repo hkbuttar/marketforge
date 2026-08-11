@@ -29,3 +29,10 @@ overrides. See [`benchmarks/README.md`](benchmarks/README.md) for metric semanti
 The entity definitions, grain, key strategy, and time semantics are documented
 in [`docs/data_model.md`](docs/data_model.md). The corresponding DuckDB DDL lives
 in [`warehouse/duckdb/init.sql`](warehouse/duckdb/init.sql).
+
+## Source contracts
+
+Executable contracts for every initial source domain live in
+[`ingestion/contracts`](ingestion/contracts). They normalize accepted records and
+route violations into immutable quarantine artifacts as described in
+[`docs/source_contracts.md`](docs/source_contracts.md).

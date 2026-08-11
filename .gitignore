@@ -3,6 +3,7 @@ __pycache__/
 benchmarks/results.jsonl
 benchmarks/results/
 demo/results/
+deploy/generated/
 data/quarantine/
 data/raw/
 data/archive/

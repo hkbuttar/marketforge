@@ -26,6 +26,14 @@ def create_app(*, database: Path | None = None, lineage_path: Path | None = None
     lineage_path = lineage_path or Path(os.getenv("MARKETFORGE_LINEAGE", "warehouse/metadata/lineage.json"))
     metadata_store = metadata_store or Path(os.getenv(
         "MARKETFORGE_METADATA_STORE", "warehouse/metadata/operational.sqlite"))
+    quarantine_root = quarantine_root or Path(os.getenv(
+        "MARKETFORGE_QUARANTINE_ROOT", "data/quarantine"))
+    project_root = project_root or Path(os.getenv("MARKETFORGE_PROJECT_ROOT", "."))
+    raw_root = raw_root or Path(os.getenv("MARKETFORGE_RAW_ROOT", "data/raw"))
+    budget_path = budget_path or Path(os.getenv(
+        "MARKETFORGE_BUDGET", "config/resource_budget.yaml"))
+    benchmarks_path = benchmarks_path or Path(os.getenv(
+        "MARKETFORGE_BENCHMARKS", "benchmarks/results/latest.json"))
     app = FastAPI(title="MarketForge API", version="0.1.0")
     origins = os.getenv(
         "MARKETFORGE_CORS_ORIGINS", "http://127.0.0.1:5173,http://localhost:5173"
@@ -36,10 +44,8 @@ def create_app(*, database: Path | None = None, lineage_path: Path | None = None
     )
     app.state.query_service = QueryService(
         database, lineage_path, metadata_store=metadata_store,
-        quarantine_root=quarantine_root or Path("data/quarantine"),
-        project_root=project_root or Path("."), raw_root=raw_root or Path("data/raw"),
-        budget_path=budget_path or Path("config/resource_budget.yaml"),
-        benchmarks_path=benchmarks_path or Path("benchmarks/results/latest.json"),
+        quarantine_root=quarantine_root, project_root=project_root, raw_root=raw_root,
+        budget_path=budget_path, benchmarks_path=benchmarks_path,
     )
 
     @app.get("/health/live", response_model=LivenessResponse)

@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: marketforge-api
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements-demo.txt && python -m scripts.build_demo_snapshot
+    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health/ready
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.13.5
+      - key: MARKETFORGE_DATABASE
+        value: deploy/generated/marketforge-demo.duckdb
+      - key: MARKETFORGE_METADATA_STORE
+        value: deploy/generated/operational.sqlite
+      - key: MARKETFORGE_LINEAGE
+        value: deploy/generated/lineage.json
+      - key: MARKETFORGE_RAW_ROOT
+        value: deploy/generated/raw
+      - key: MARKETFORGE_BENCHMARKS
+        value: deploy/generated/benchmarks.json
+      - key: MARKETFORGE_CORS_ORIGINS
+        sync: false

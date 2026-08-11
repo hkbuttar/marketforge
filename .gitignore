@@ -10,6 +10,7 @@ warehouse/metadata/checkpoints.sqlite*
 warehouse/metadata/operational.sqlite*
 warehouse/metadata/dataset_builds/
 warehouse/duckdb/*.duckdb*
+warehouse/duckdb/history/
 dbt/target/
 dbt/logs/
 dbt/dbt_packages/

@@ -99,6 +99,23 @@ class BackfillTests(unittest.TestCase):
             manifest = json.loads((root / "metadata" / "second.json").read_text())
             self.assertEqual(manifest["status"], "success")
 
+    def test_breaking_type_degrades_run_without_changing_canonical_data(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            result = run_backfill(
+                "prices", [price("bad-volume", "2026-01-02") | {"volume": "1.23M"}],
+                source="test-provider", raw_root=root / "raw",
+                quarantine_root=root / "quarantine", metadata_root=root / "metadata",
+                run_id="breaking-type", now=datetime(2026, 8, 11, tzinfo=timezone.utc),
+            )
+            self.assertEqual(result.status, "degraded")
+            self.assertEqual(result.contract_version, 1)
+            self.assertEqual(result.quarantined_rows, 1)
+            self.assertEqual(result.files_written, 0)
+            self.assertFalse(list((root / "raw").glob("**/*.parquet")))
+            manifest = json.loads((root / "metadata/breaking-type.json").read_text())
+            self.assertEqual(manifest["status"], "degraded")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -69,6 +69,7 @@ class BackfillResult:
     earliest_late_event_date: str | None = None
     arrival_time: str | None = None
     prior_event_watermark: str | None = None
+    contract_version: int = 1
 
 
 class IdempotencyConflictError(RuntimeError):
@@ -300,7 +301,7 @@ def run_backfill(
     result = BackfillResult(
         run_id=run_id,
         dataset=dataset,
-        status="success",
+        status="degraded" if validation.rejected else "success",
         input_rows=len(supplied),
         accepted_rows=len(new_rows),
         quarantined_rows=len(validation.rejected),
@@ -319,6 +320,7 @@ def run_backfill(
         earliest_late_event_date=(min(late_event_dates).isoformat() if late_event_dates else None),
         arrival_time=started_at.isoformat(),
         prior_event_watermark=late_event_cutoff.isoformat() if late_event_cutoff else None,
+        contract_version=contract.version,
     )
     _write_manifest(result, metadata_root)
     return result

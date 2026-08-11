@@ -14,6 +14,10 @@ Normalizer = Callable[[Any], Any]
 Rule = Callable[[Mapping[str, Any]], str | None]
 
 
+class MissingRequiredFieldError(ValueError):
+    """A required column disappeared from the entire provider batch."""
+
+
 def text(value: Any) -> str:
     if not isinstance(value, str):
         raise TypeError("must be a string")
@@ -104,6 +108,8 @@ class Contract:
     fields: Mapping[str, Field]
     unique_by: tuple[str, ...]
     idempotency_by: tuple[str, ...]
+    version: int = 1
+    unknown_field_policy: str = "quarantine"
     rules: tuple[Rule, ...] = ()
     aliases: Mapping[str, str] = field(default_factory=dict)
     source_metadata: Mapping[str, Any] = field(default_factory=dict)
@@ -120,6 +126,19 @@ class Contract:
         received_at = received_at or datetime.now(timezone.utc)
         if received_at.tzinfo is None:
             raise ValueError("received_at must be timezone-aware")
+        records = tuple(records)
+        if records:
+            batch_columns = {
+                self.aliases.get(column, column)
+                for record in records
+                for column in record
+            }
+            missing_from_batch = set(self.fields) - batch_columns
+            if missing_from_batch:
+                raise MissingRequiredFieldError(
+                    f"{self.name} contract v{self.version}: required columns absent from entire "
+                    f"batch: {sorted(missing_from_batch)}"
+                )
         accepted: list[dict[str, Any]] = []
         rejected: list[QuarantineRecord] = []
         seen: set[tuple[Any, ...]] = set()
@@ -135,7 +154,10 @@ class Contract:
             if missing:
                 errors.append(f"missing columns: {sorted(missing)}")
             if unexpected:
-                errors.append(f"unexpected columns: {sorted(unexpected)}")
+                errors.append(
+                    f"unexpected columns under {self.unknown_field_policy} policy: "
+                    f"{sorted(unexpected)}"
+                )
 
             row: dict[str, Any] = {}
             for name, spec in self.fields.items():

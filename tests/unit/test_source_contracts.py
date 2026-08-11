@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from ingestion.contracts import CONTRACTS, PRICES_CONTRACT
-from ingestion.contracts.base import write_quarantine
+from ingestion.contracts.base import MissingRequiredFieldError, write_quarantine
 
 
 NOW = "2026-08-11T12:00:00Z"
@@ -39,6 +39,8 @@ class SourceContractTests(unittest.TestCase):
             self.assertIn("source", contract.fields)
             self.assertIn("source_record_id", contract.fields)
             self.assertIn("ingested_at", contract.fields)
+            self.assertGreaterEqual(contract.version, 1)
+            self.assertEqual(contract.unknown_field_policy, "quarantine")
 
     def test_domain_idempotency_keys_are_explicit(self):
         self.assertEqual(CONTRACTS["prices"].idempotency_by, ("symbol", "date", "source"))
@@ -74,6 +76,33 @@ class SourceContractTests(unittest.TestCase):
         self.assertEqual(len(result.rejected), 2)
         self.assertIn("unexpected columns", result.rejected[0].error_message)
         self.assertIn("duplicate batch key", result.rejected[1].error_message)
+
+    def test_additive_field_is_quarantined_until_contract_version_changes(self):
+        result = PRICES_CONTRACT.validate(
+            [valid_price(adjusted_close=228.0)],
+            source="test-provider",
+            ingestion_run_id="additive-drift",
+        )
+        self.assertFalse(result.accepted)
+        self.assertIn("quarantine policy", result.rejected[0].error_message)
+        self.assertIn("adjusted_close", result.rejected[0].error_message)
+
+    def test_breaking_type_change_is_quarantined(self):
+        result = PRICES_CONTRACT.validate(
+            [valid_price(volume="1.23M")],
+            source="test-provider",
+            ingestion_run_id="breaking-type",
+        )
+        self.assertFalse(result.accepted)
+        self.assertIn("volume", result.rejected[0].error_message)
+
+    def test_required_field_disappearing_from_batch_is_a_hard_failure(self):
+        row = valid_price()
+        del row["ticker"]
+        with self.assertRaisesRegex(MissingRequiredFieldError, "symbol"):
+            PRICES_CONTRACT.validate(
+                [row], source="test-provider", ingestion_run_id="missing-symbol"
+            )
 
     def test_naive_timestamps_and_source_mismatch_are_rejected(self):
         result = PRICES_CONTRACT.validate(

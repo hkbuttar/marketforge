@@ -70,7 +70,7 @@ def _manifest(resource: PlatformResource, dataset: str) -> dict:
     manifests = []
     for path in Path(resource.metadata_root).glob("*.json"):
         payload = json.loads(path.read_text(encoding="utf-8"))
-        if payload.get("dataset") == dataset and payload.get("status") == "success":
+        if payload.get("dataset") == dataset and payload.get("status") in {"success", "degraded"}:
             manifests.append(payload)
     if not manifests:
         raise Failure(f"no successful ingestion manifest exists for {dataset}")
@@ -116,6 +116,8 @@ def _raw_asset(context: AssetExecutionContext, resource: PlatformResource, datas
             "latest_event_date": manifest.get("max_event_date") or "unknown",
             "late_arriving_rows": manifest.get("late_arriving_rows", 0),
             "earliest_late_event_date": manifest.get("earliest_late_event_date") or "none",
+            "contract_version": manifest.get("contract_version", "unknown"),
+            "ingestion_status": manifest["status"],
         }
     )
 

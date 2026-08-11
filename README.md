@@ -3,7 +3,7 @@ Local-first analytical data platform for equity, fundamental, macro, and news da
 
 ## Testing and validation
 
-The current deterministic suite passes **110 tests across all 19 required
+The current deterministic suite passes **111 tests across all 19 required
 validation categories**, with zero failures, errors, or skips, as measured on
 2026-08-11. This count uses `unittest` test methods; Hypothesis examples and
 subtests are intentionally not inflated into separate headline tests.

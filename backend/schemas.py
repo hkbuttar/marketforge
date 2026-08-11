@@ -82,6 +82,62 @@ class DatasetList(ApiModel):
     meta: PageMeta
 
 
+class DatasetSchema(ApiModel):
+    dataset: str
+    contract_version: int
+    fields: list[dict[str, Any]]
+    unique_by: list[str]
+    idempotency_by: list[str]
+
+
+class PipelineRun(ApiModel):
+    run_id: str
+    job_name: str
+    dataset: str
+    run_type: str
+    started_at: datetime
+    finished_at: datetime
+    status: str
+    records_fetched: int
+    records_written: int
+    records_rejected: int
+    error: str | None = None
+
+
+class QualityResult(ApiModel):
+    result_id: str
+    run_id: str | None = None
+    dataset: str
+    check_name: str
+    status: str
+    observed_value: float | None = None
+    expected_value: str | None = None
+    message: str
+    evaluated_at: datetime
+
+
+class SectorSummary(ApiModel):
+    sector: str
+    latest_date: date
+    latest_average_return: float | None = None
+    securities_with_returns: int
+
+
+class SectorPoint(ApiModel):
+    trade_date: date
+    sector_average_return: float | None = None
+    securities_with_returns: int
+
+
+class BreadthPoint(ApiModel):
+    trade_date: date
+    market_breadth: float | None = None
+    advancers: int
+    decliners: int
+    unchanged: int
+    securities_with_returns: int
+
+
 class LineageResponse(ApiModel):
     dataset: str
     nodes: list[dict[str, Any]]

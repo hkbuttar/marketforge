@@ -15,7 +15,17 @@ database and lineage artifact. Available routes are:
 - `GET /api/securities/{symbol}/history?source=tiingo&limit=252`
 - `GET /api/pipeline/health`
 - `GET /api/datasets`
+- `GET /api/datasets/{dataset}`
+- `GET /api/datasets/{dataset}/schema`
 - `GET /api/datasets/{dataset}/lineage`
+- `GET /api/pipeline/runs`
+- `GET /api/quality`
+- `GET /api/quarantine/summary`
+- `GET /api/sectors`
+- `GET /api/sectors/{sector}/history`
+- `GET /api/market/breadth`
+- `GET /api/system/storage`
+- `GET /api/system/benchmarks`
 - `GET /health/live`
 - `GET /health/ready`
 

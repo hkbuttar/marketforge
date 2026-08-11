@@ -1,0 +1,11 @@
+# MarketForge runtime
+duckdb>=1.0,<2
+pytz>=2024
+
+# Transformation
+dbt-core>=1.10,<1.11
+dbt-duckdb>=1.10,<1.11
+
+# Orchestration and local UI
+dagster>=1.10,<2
+dagster-webserver>=1.10,<2

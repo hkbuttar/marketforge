@@ -1,4 +1,6 @@
 import json
+import subprocess
+import sys
 import tempfile
 import unittest
 from datetime import date
@@ -18,6 +20,20 @@ def price(day):
 
 
 class RangeBackfillTests(unittest.TestCase):
+    def test_missing_input_reports_actionable_cli_error(self):
+        result = subprocess.run(
+            [
+                sys.executable, "-m", "scripts.backfill", "--dataset", "prices",
+                "--start", "2025-01-01", "--end", "2025-03-31", "--source", "provider",
+                "--input", "extracts/does-not-exist.jsonl", "--skip-downstream",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("input file not found", result.stderr)
+        self.assertNotIn("Traceback", result.stderr)
+
     def test_overlapping_ranges_are_recorded_and_reconciled(self):
         rows = [price("2025-01-02"), price("2025-02-03"), price("2025-03-03"), price("2025-04-01")]
         with tempfile.TemporaryDirectory() as directory:

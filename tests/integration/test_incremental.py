@@ -1,5 +1,6 @@
 import tempfile
 import unittest
+import json
 from datetime import date, datetime, timezone
 from pathlib import Path
 
@@ -15,6 +16,41 @@ def price(day: str, record_id: str, close: float = 100):
 
 
 class IncrementalTests(unittest.TestCase):
+    def test_late_arrival_is_written_and_audited_against_prior_watermark(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            store = CheckpointStore(root / "checkpoints.sqlite")
+            options = {
+                "source": "provider", "checkpoint_store": store,
+                "raw_root": root / "raw", "quarantine_root": root / "quarantine",
+                "metadata_root": root / "runs",
+            }
+            first = run_incremental(
+                "prices", [price("2026-07-17", "on-time-17")],
+                initial_start=date(2026, 7, 17), through=date(2026, 7, 17),
+                now=datetime(2026, 7, 17, 22, tzinfo=timezone.utc), run_id="on-time", **options,
+            )
+            self.assertEqual(first.backfill.late_arriving_rows, 0)
+
+            late = run_incremental(
+                "prices", [price("2026-07-15", "late-15"), price("2026-07-18", "on-time-18")],
+                through=date(2026, 7, 18), overlap_days=3,
+                now=datetime(2026, 7, 18, 22, tzinfo=timezone.utc), run_id="late-arrival", **options,
+            )
+
+            self.assertEqual(late.fetch_from, date(2026, 7, 15))
+            self.assertEqual(late.backfill.accepted_rows, 2)
+            self.assertEqual(late.backfill.late_arriving_rows, 1)
+            self.assertEqual(late.backfill.earliest_late_event_date, "2026-07-15")
+            self.assertEqual(late.backfill.prior_event_watermark, "2026-07-17")
+            self.assertEqual(late.backfill.arrival_time, "2026-07-18T22:00:00+00:00")
+            july_files = list((root / "raw/prices/year=2026/month=07").glob("*.parquet"))
+            self.assertEqual(len(july_files), 2)
+            manifest = json.loads((root / "runs/late-arrival.json").read_text())
+            self.assertEqual(manifest["late_arriving_rows"], 1)
+            self.assertEqual(manifest["earliest_late_event_date"], "2026-07-15")
+            self.assertIn("completed_at", manifest)
+
     def test_checkpoint_window_overlap_and_replay(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

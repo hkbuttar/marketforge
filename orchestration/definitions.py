@@ -114,6 +114,8 @@ def _raw_asset(context: AssetExecutionContext, resource: PlatformResource, datas
         metadata={
             "run_id": manifest["run_id"], "rows": row_count, "files": len(files),
             "latest_event_date": manifest.get("max_event_date") or "unknown",
+            "late_arriving_rows": manifest.get("late_arriving_rows", 0),
+            "earliest_late_event_date": manifest.get("earliest_late_event_date") or "none",
         }
     )
 

@@ -65,6 +65,10 @@ class BackfillResult:
     run_type: str
     requested_start: str | None
     requested_end: str | None
+    late_arriving_rows: int = 0
+    earliest_late_event_date: str | None = None
+    arrival_time: str | None = None
+    prior_event_watermark: str | None = None
 
 
 class IdempotencyConflictError(RuntimeError):
@@ -201,6 +205,7 @@ def run_backfill(
     run_type: str = "historical_backfill",
     requested_start: date | None = None,
     requested_end: date | None = None,
+    late_event_cutoff: date | None = None,
 ) -> BackfillResult:
     if dataset not in CONTRACTS:
         raise ValueError(f"unknown dataset {dataset!r}; choose from {sorted(CONTRACTS)}")
@@ -284,6 +289,14 @@ def run_backfill(
     for row in validation.accepted:
         value = row[EVENT_FIELDS[dataset]]
         accepted_event_dates.append(value.date() if isinstance(value, datetime) else value)
+    new_event_dates = []
+    for row in new_rows:
+        value = row[EVENT_FIELDS[dataset]]
+        new_event_dates.append(value.date() if isinstance(value, datetime) else value)
+    late_event_dates = (
+        [value for value in new_event_dates if value <= late_event_cutoff]
+        if late_event_cutoff else []
+    )
     result = BackfillResult(
         run_id=run_id,
         dataset=dataset,
@@ -302,6 +315,10 @@ def run_backfill(
         run_type=run_type,
         requested_start=requested_start.isoformat() if requested_start else None,
         requested_end=requested_end.isoformat() if requested_end else None,
+        late_arriving_rows=len(late_event_dates),
+        earliest_late_event_date=(min(late_event_dates).isoformat() if late_event_dates else None),
+        arrival_time=started_at.isoformat(),
+        prior_event_watermark=late_event_cutoff.isoformat() if late_event_cutoff else None,
     )
     _write_manifest(result, metadata_root)
     return result

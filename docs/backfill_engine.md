@@ -6,8 +6,14 @@ runs:
 ```bash
 python -m scripts.backfill \
   --dataset prices --start 2025-01-01 --end 2025-03-31 \
-  --source provider-name --input extracts/prices.jsonl
+  --source synthetic-example --input extracts/prices.example.jsonl \
+  --skip-downstream
 ```
+
+The included extract is synthetic and intended only as a smoke test. For a real
+backfill, replace `--source` with the provider identifier and `--input` with an
+existing provider CSV, JSON, or JSONL extract. Omit `--skip-downstream` to run the
+affected dbt models and tests after ingestion.
 
 The engine filters the provider response by canonical event time, then uses the
 same contracts, quarantine, idempotency checks, validated staging, and atomic

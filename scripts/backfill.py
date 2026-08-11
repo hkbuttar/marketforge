@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import subprocess
+import sys
 from dataclasses import asdict
 from datetime import date
 from pathlib import Path
@@ -87,15 +88,26 @@ def parser() -> argparse.ArgumentParser:
     command.add_argument("--metadata-root", type=Path, default=Path("warehouse/metadata/ingestion_runs"))
     command.add_argument("--run-id")
     command.add_argument("--skip-downstream", action="store_true")
-    command.add_argument("--dbt-executable", default=".venv/bin/dbt")
+    command.add_argument("--dbt-executable", default=str(Path(sys.executable).with_name("dbt")))
     return command
 
 
 def main() -> int:
-    args = parser().parse_args()
+    command = parser()
+    args = command.parse_args()
+    try:
+        records = read_records(args.input, args.format)
+    except FileNotFoundError:
+        command.error(
+            f"input file not found: {args.input!r}. "
+            "Provide a CSV, JSON, or JSONL extract (see extracts/prices.example.jsonl)."
+        )
+    except (OSError, UnicodeError, json.JSONDecodeError, ValueError) as exc:
+        command.error(f"unable to read --input {args.input!r}: {exc}")
+
     result = execute_backfill(
         args.dataset,
-        read_records(args.input, args.format),
+        records,
         start=args.start,
         end=args.end,
         source=args.source,

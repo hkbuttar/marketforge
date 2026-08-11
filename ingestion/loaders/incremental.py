@@ -92,6 +92,7 @@ def run_incremental(
         run_type="incremental",
         requested_start=fetch_from,
         requested_end=through,
+        late_event_cutoff=checkpoint.last_successful_event_date if checkpoint else None,
     )
     checkpoint_date = checkpoint.last_successful_event_date if checkpoint else None
     if result.max_event_date is not None:

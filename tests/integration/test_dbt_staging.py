@@ -66,6 +66,14 @@ class DbtStagingTests(unittest.TestCase):
                 cwd=ROOT, text=True, capture_output=True, check=False,
             )
             self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
+            freshness = subprocess.run(
+                [DBT, "source", "freshness", "--project-dir", str(ROOT / "dbt"),
+                 "--profiles-dir", str(profiles), "--vars",
+                 json.dumps({"raw_root": str(raw), "metadata_root": str(temp / "metadata")}),
+                 "--no-use-colors"],
+                cwd=ROOT, text=True, capture_output=True, check=False,
+            )
+            self.assertEqual(freshness.returncode, 0, freshness.stdout + freshness.stderr)
             with duckdb.connect(str(database)) as connection:
                 models = connection.execute(
                     "SELECT table_name FROM information_schema.views WHERE table_schema='main_staging'"

@@ -8,6 +8,16 @@ models:
         data_tests: [not_null]
       - name: trade_date
         data_tests: [not_null]
+      - name: price_bar_key
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('int_rolling_volatility')
+                field: price_bar_key
+    data_tests:
+      - unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [symbol, trade_date, source]
   - name: mart_market_daily
     description: "Cross-sectional market breadth and return statistics."
     columns:
@@ -18,6 +28,8 @@ models:
     columns:
       - name: source_security_key
         data_tests: [not_null, unique]
+      - name: latest_price
+        data_tests: [not_null]
   - name: mart_pipeline_dataset_health
     description: "Freshness, counts, quality, quarantine, and run state for each dataset."
     columns:
@@ -28,3 +40,7 @@ models:
           - accepted_values:
               arguments:
                 values: ['healthy', 'degraded', 'empty', 'unknown']
+    data_tests:
+      - expression_is_true:
+          arguments:
+            expression: "row_count >= 0 and duplicate_count >= 0 and quarantine_count >= 0"

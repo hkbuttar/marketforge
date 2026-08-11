@@ -67,3 +67,6 @@ macro-alignment logic lives in the dbt intermediate layer described in
 
 Consumer-facing security, market, company snapshot, and pipeline-health marts are
 documented in [`docs/dbt_marts.md`](docs/dbt_marts.md).
+
+The multi-level dbt quality gate and source freshness policy are documented in
+[`docs/dbt_testing.md`](docs/dbt_testing.md).

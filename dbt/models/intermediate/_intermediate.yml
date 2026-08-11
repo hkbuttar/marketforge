@@ -5,22 +5,55 @@ models:
     description: "Daily close-to-close returns computed once for downstream reuse."
     columns:
       - name: price_bar_key
-        data_tests: [not_null, unique]
+        data_tests:
+          - not_null
+          - unique
+          - relationships:
+              arguments:
+                to: ref('stg_prices')
+                field: price_bar_key
+      - name: daily_return
+        data_tests:
+          - expression_is_true:
+              arguments:
+                expression: "daily_return is null or abs(daily_return) <= 5.0"
   - name: int_rolling_volatility
     description: "Trailing 20-observation return and volatility features."
     columns:
       - name: price_bar_key
-        data_tests: [not_null, unique]
+        data_tests:
+          - not_null
+          - unique
+          - relationships:
+              arguments:
+                to: ref('int_daily_returns')
+                field: price_bar_key
   - name: int_security_fundamentals
     description: "Fundamental observations with point-in-time effective ranges."
     columns:
       - name: fundamental_observation_key
-        data_tests: [not_null, unique]
+        data_tests:
+          - not_null
+          - unique
+          - relationships:
+              arguments:
+                to: ref('stg_fundamentals')
+                field: fundamental_observation_key
+    data_tests:
+      - expression_is_true:
+          arguments:
+            expression: "effective_to is null or effective_to > effective_from"
   - name: int_earnings_surprises
     description: "Absolute and percentage EPS surprises with zero-safe division."
     columns:
       - name: earnings_event_key
-        data_tests: [not_null, unique]
+        data_tests:
+          - not_null
+          - unique
+          - relationships:
+              arguments:
+                to: ref('stg_earnings')
+                field: earnings_event_key
   - name: int_macro_aligned
     description: "Latest macro value knowable on each observed trading date."
     columns:
@@ -28,3 +61,10 @@ models:
         data_tests: [not_null]
       - name: series_id
         data_tests: [not_null]
+    data_tests:
+      - unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [trade_date, series_id, source]
+      - expression_is_true:
+          arguments:
+            expression: "available_date is null or available_date <= trade_date"

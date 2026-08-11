@@ -6,11 +6,26 @@ sources:
     tables:
       - name: prices
         identifier: raw_prices
+        config:
+          loaded_at_field: ingested_at
+          freshness: {warn_after: {count: 36, period: hour}, error_after: {count: 48, period: hour}}
       - name: fundamentals
         identifier: raw_fundamentals
+        config:
+          loaded_at_field: ingested_at
+          freshness: {warn_after: {count: 90, period: day}, error_after: {count: 120, period: day}}
       - name: earnings
         identifier: raw_earnings
+        config:
+          loaded_at_field: ingested_at
+          freshness: {warn_after: {count: 7, period: day}, error_after: {count: 14, period: day}}
       - name: macro
         identifier: raw_macro
+        config:
+          loaded_at_field: ingested_at
+          freshness: {warn_after: {count: 30, period: day}, error_after: {count: 45, period: day}}
       - name: news
         identifier: raw_news
+        config:
+          loaded_at_field: ingested_at
+          freshness: {warn_after: {count: 36, period: hour}, error_after: {count: 48, period: hour}}

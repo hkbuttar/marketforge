@@ -1,4 +1,5 @@
 select
+    price_bar_key,
     md5(source || '|' || symbol) as source_security_key,
     trade_date,
     symbol,

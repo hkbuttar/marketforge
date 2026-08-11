@@ -10,18 +10,50 @@ models:
         data_tests: [not_null]
       - name: trade_date
         data_tests: [not_null]
+      - name: source
+        data_tests: [not_null]
+    data_tests:
+      - unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [symbol, trade_date, source]
+      - expression_is_true:
+          arguments:
+            expression: "high >= low and high >= open and high >= close and low <= open and low <= close"
+      - expression_is_true:
+          arguments:
+            expression: "volume >= 0"
+      - expression_is_true:
+          arguments:
+            expression: "trade_date <= current_date"
   - name: stg_fundamentals
     columns:
       - name: fundamental_observation_key
         data_tests: [not_null, unique]
+    data_tests:
+      - expression_is_true:
+          arguments:
+            expression: "period_start is null or period_end >= period_start"
+      - expression_is_true:
+          arguments:
+            expression: "filed_at is null or filed_at <= ingested_at"
   - name: stg_macro
     columns:
       - name: macro_observation_key
         data_tests: [not_null, unique]
+      - name: frequency
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['DAILY', 'WEEKLY', 'MONTHLY', 'QUARTERLY', 'ANNUAL']
   - name: stg_earnings
     columns:
       - name: earnings_event_key
         data_tests: [not_null, unique]
+      - name: event_status
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['SCHEDULED', 'CONFIRMED', 'REPORTED', 'CANCELLED']
   - name: stg_news
     columns:
       - name: news_event_key

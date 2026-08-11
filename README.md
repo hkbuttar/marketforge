@@ -54,3 +54,6 @@ Idempotency keys and replay/conflict behavior are documented and executable via
 Raw Parquet writes use validated same-filesystem staging and atomic promotion;
 crash windows and recovery behavior are detailed in
 [`docs/atomic_writes.md`](docs/atomic_writes.md).
+
+DuckDB queries Parquet directly through reusable raw views. Analytical benchmark
+methodology and results are in [`docs/duckdb_analytics.md`](docs/duckdb_analytics.md).

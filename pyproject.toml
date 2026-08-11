@@ -13,4 +13,4 @@ dependencies = ["duckdb>=1.0,<2", "pytz>=2024"]
 marketforge-ingest = "ingestion.cli:main"
 
 [tool.setuptools.packages.find]
-include = ["ingestion*"]
+include = ["ingestion*", "warehouse*"]

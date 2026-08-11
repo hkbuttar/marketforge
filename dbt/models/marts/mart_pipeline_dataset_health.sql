@@ -23,14 +23,21 @@ with dataset_metrics as (
         partition by dataset order by cast(completed_at as timestamptz) desc, run_id desc
     ) as run_rank
     from ingestion_runs
-    where status = 'success'
 ), latest_runs as (
     select * from ranked_runs where run_rank = 1
+), ranked_successful_runs as (
+    select *, row_number() over (
+        partition by dataset order by cast(completed_at as timestamptz) desc, run_id desc
+    ) as run_rank
+    from ingestion_runs
+    where status = 'success'
+), latest_successful_runs as (
+    select * from ranked_successful_runs where run_rank = 1
 )
 select
     metrics.dataset,
-    runs.run_id as last_successful_run,
-    cast(runs.completed_at as timestamptz) as last_successful_run_at,
+    successful.run_id as last_successful_run,
+    cast(successful.completed_at as timestamptz) as last_successful_run_at,
     metrics.latest_event_time,
     date_diff('minute', metrics.latest_event_time, current_timestamp) as freshness_minutes,
     metrics.row_count,
@@ -39,9 +46,11 @@ select
     coalesce(runs.quarantined_rows, 0) as quarantine_count,
     case
         when metrics.row_count = 0 then 'empty'
-        when metrics.duplicate_count > 0 or metrics.null_rate > 0 then 'degraded'
-        when runs.run_id is null then 'unknown'
+        when metrics.duplicate_count > 0 or metrics.null_rate > 0
+          or coalesce(runs.quarantined_rows, 0) > 0 then 'degraded'
+        when successful.run_id is null then 'unknown'
         else 'healthy'
     end as status
 from dataset_metrics metrics
 left join latest_runs runs using (dataset)
+left join latest_successful_runs successful using (dataset)

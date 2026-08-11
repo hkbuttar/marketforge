@@ -48,3 +48,27 @@ year/month, and year/month/symbol layouts across one-day cross sections,
 single-symbol months, one-year scans, and full-history aggregations. Temporary
 layouts are removed automatically. The measured decision and results are recorded
 in `docs/historical_backfill.md`.
+
+## Incremental versus full refresh
+
+`python -m benchmarks.incremental_vs_full` constructs isolated full-refresh and
+incremental lakes from the same retained Tiingo rows. Setup of the prior
+incremental state is excluded from the timed daily operation. A deterministic hash
+over canonical row values proves both paths produce the same result.
+
+Measured on the 49-symbol price universe through 2026-08-10:
+
+| Metric | Full refresh | Daily incremental |
+| --- | ---: | ---: |
+| Rows processed | 68,894 | 49 |
+| Input bytes | 14,484,982 | 10,328 |
+| Output bytes | 1,470,642 | 8,853 |
+| Files written | 68 | 1 |
+| Wall time | 35.024 s | 0.231 s |
+| Peak RAM | 302.9 MB | 156.2 MB |
+
+The incremental path processed **0.0711%** of historical rows, completed **151.77×
+faster**, and wrote **99.40% fewer bytes**. This validates incremental ingestion as
+the normal production path; full refresh remains a reproducibility and recovery
+operation. Results are specific to this machine and current dataset and should be
+remeasured as the universe grows.

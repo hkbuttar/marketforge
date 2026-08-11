@@ -1,5 +1,22 @@
 # Job benchmarks
 
+## Complete benchmark suite
+
+Run every production-representative benchmark and write JSON, two-column CSV,
+and a human-readable Markdown report with one command:
+
+```bash
+python -m benchmarks.run
+```
+
+Reports are written to `benchmarks/results/latest.{json,csv,md}` and are ignored
+by Git because timings are machine- and dataset-specific. The suite measures the
+historical row count and footprint, storage compression, isolated full versus
+incremental ingestion, representative DuckDB queries, and compaction. Compaction
+runs against a temporary copy and never modifies the retained raw lake. Use
+`--iterations` to control median timing samples and `--output-dir` to retain a
+named result set elsewhere.
+
 Run major ingestion, transformation, compaction, and serving-materialization jobs
 through `scripts/benchmark.py`. Each invocation emits one JSON object and appends
 it to `benchmarks/results.jsonl`.

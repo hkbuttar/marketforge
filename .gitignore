@@ -1,6 +1,7 @@
 __pycache__/
 *.py[cod]
 benchmarks/results.jsonl
+benchmarks/results/
 data/quarantine/
 data/raw/
 data/archive/

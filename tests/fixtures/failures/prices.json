@@ -1,0 +1,13 @@
+[
+  {"case":"duplicate_row","repeat":2,"expected":"quarantine","reason":"duplicate batch key"},
+  {"case":"missing_symbol","remove":["symbol"],"expected":"hard_failure","reason":"required columns absent"},
+  {"case":"negative_volume","overrides":{"volume":-1},"expected":"quarantine","reason":"volume"},
+  {"case":"high_below_low","overrides":{"high":98,"low":99},"expected":"quarantine","reason":"high"},
+  {"case":"wrong_date_type","overrides":{"date":{"year":2026}},"expected":"quarantine","reason":"date"},
+  {"case":"late_arriving_record","overrides":{"date":"2026-08-05"},"expected":"late_arrival","reason":"late_arriving_rows"},
+  {"case":"unknown_security","overrides":{"symbol":"ZZZZ_UNKNOWN"},"expected":"quality_failure","reason":"unresolved symbol"},
+  {"case":"schema_added_column","overrides":{"vendor_surprise":"new"},"expected":"quarantine","reason":"unexpected columns"},
+  {"case":"schema_missing_column","remove":["close"],"expected":"hard_failure","reason":"required columns absent"},
+  {"case":"unexpected_string_numeric","overrides":{"open":"one hundred"},"expected":"quarantine","reason":"open"},
+  {"case":"empty_api_response","empty":true,"expected":"no_progress","reason":"checkpoint unchanged"}
+]

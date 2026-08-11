@@ -20,3 +20,27 @@ database and lineage artifact. Available routes are:
 Limits are validated and capped. Symbols and sources are bound parameters. Missing
 published marts return HTTP 503; missing entities return HTTP 404. Interactive
 OpenAPI documentation is available at `/docs` while the server is running.
+
+## Cache
+
+Approved query results use a bounded in-process TTL/LRU cache. Keys contain the
+endpoint, normalized parameters, published DuckDB file version, and dataset-build
+metadata version. Lineage queries also include the lineage artifact version. A new
+mart or dataset build therefore cannot reuse a stale result.
+
+Defaults are a 30-second TTL and 256 entries. Returned values are copied so callers
+cannot mutate cached state. Benchmark the active mart database with:
+
+```bash
+python -m scripts.benchmark_cache --iterations 20 --limit 100
+```
+
+The output reports uncached latency, mean cached latency, hit rate, and eviction
+counts. The cache remains intentionally process-local; no Redis service is needed
+for the laptop deployment.
+
+On 2026-08-11, a 20-query benchmark over a 50-security snapshot derived from the
+local Tiingo partitions measured 4.75 ms for the uncached request and 0.145 ms mean
+end-to-end latency for cached requests (32.83x faster, 95.2% hit rate including the
+initial miss). This is a microbenchmark, not a concurrency claim; it supports the
+small in-process cache but not the operational cost of an external cache service.

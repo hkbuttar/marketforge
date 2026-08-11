@@ -23,6 +23,7 @@ NEWS_CONTRACT = Contract(
         "ingested_at": Field(utc_datetime),
     },
     unique_by=("source", "source_record_id"),
+    idempotency_by=("source", "source_record_id"),
     aliases={"published_at": "event_timestamp", "title": "headline"},
     source_metadata={"event_time_field": "event_timestamp", "content_retained": False},
 )

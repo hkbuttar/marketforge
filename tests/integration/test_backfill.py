@@ -58,6 +58,13 @@ class BackfillTests(unittest.TestCase):
                 )
                 self.assertEqual(result.accepted_rows, 1, dataset)
                 self.assertEqual(result.files_written, 1, dataset)
+                replay = run_backfill(
+                    dataset, [row], source="test-provider", raw_root=root / "raw",
+                    quarantine_root=root / "quarantine", metadata_root=root / "metadata",
+                    run_id=f"replay-{dataset}", now=datetime(2026, 8, 12, tzinfo=timezone.utc),
+                )
+                self.assertEqual(replay.accepted_rows, 0, dataset)
+                self.assertEqual(replay.duplicate_rows, 1, dataset)
 
     def test_backfill_partitions_quarantines_and_is_idempotent(self):
         with tempfile.TemporaryDirectory() as directory:

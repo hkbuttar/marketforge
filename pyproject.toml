@@ -7,7 +7,7 @@ name = "marketforge"
 version = "0.1.0"
 description = "Local-first analytical data platform"
 requires-python = ">=3.11"
-dependencies = ["duckdb>=1.0,<2"]
+dependencies = ["duckdb>=1.0,<2", "pytz>=2024"]
 
 [project.scripts]
 marketforge-ingest = "ingestion.cli:main"

@@ -21,6 +21,7 @@ MACRO_CONTRACT = Contract(
         "ingested_at": Field(utc_datetime),
     },
     unique_by=("source", "source_record_id"),
+    idempotency_by=("source", "source_record_id"),
     rules=(release_order,),
     aliases={"date": "observation_date", "release_timestamp": "released_at"},
     source_metadata={"event_time_field": "observation_date", "knowledge_time_field": "released_at"},

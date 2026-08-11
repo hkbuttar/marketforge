@@ -62,6 +62,10 @@ class BackfillResult:
     max_event_date: str | None
 
 
+class IdempotencyConflictError(RuntimeError):
+    """An existing logical key was replayed with different canonical values."""
+
+
 def _stable_record_id(row: Mapping[str, Any]) -> str:
     encoded = json.dumps(row, sort_keys=True, separators=(",", ":"), default=str).encode()
     return hashlib.sha256(encoded).hexdigest()
@@ -71,14 +75,29 @@ def _size(paths: Iterable[Path]) -> int:
     return sum(path.stat().st_size for path in paths if path.is_file())
 
 
-def _existing_ids(dataset_root: Path) -> set[tuple[str, str]]:
+def _existing_rows(dataset_root: Path, contract) -> dict[tuple[Any, ...], tuple[Any, ...]]:
     files = list(dataset_root.glob("year=*/month=*/*.parquet"))
     if not files:
-        return set()
+        return {}
+    value_fields = tuple(
+        field for field in contract.fields if field not in {"ingested_at", "source_record_id"}
+        or field in contract.idempotency_by
+    )
+    selected = tuple(dict.fromkeys((*contract.idempotency_by, *value_fields)))
+    quoted = ", ".join(f'"{field}"' for field in selected)
     with duckdb.connect() as connection:
         placeholders = ", ".join("?" for _ in files)
-        query = f"SELECT DISTINCT source, source_record_id FROM read_parquet([{placeholders}])"
-        return set(connection.execute(query, [str(path) for path in files]).fetchall())
+        query = f"SELECT {quoted} FROM read_parquet([{placeholders}])"
+        rows = connection.execute(query, [str(path) for path in files]).fetchall()
+    positions = {field: index for index, field in enumerate(selected)}
+    existing = {}
+    for row in rows:
+        key = tuple(row[positions[field]] for field in contract.idempotency_by)
+        values = tuple(row[positions[field]] for field in value_fields)
+        if key in existing and existing[key] != values:
+            raise IdempotencyConflictError(f"retained data already conflicts for key {key!r}")
+        existing[key] = values
+    return existing
 
 
 def _write_partition(contract, rows: list[dict[str, Any]], target: Path) -> None:
@@ -147,11 +166,25 @@ def run_backfill(
         enriched, source=source, ingestion_run_id=run_id, received_at=started_at
     )
     write_quarantine(validation.rejected, quarantine_root)
-    existing = _existing_ids(raw_root / dataset)
-    new_rows = [
-        row for row in validation.accepted if (row["source"], row["source_record_id"]) not in existing
-    ]
-    duplicate_rows = len(validation.accepted) - len(new_rows)
+    existing = _existing_rows(raw_root / dataset, contract)
+    value_fields = tuple(
+        field for field in contract.fields if field not in {"ingested_at", "source_record_id"}
+        or field in contract.idempotency_by
+    )
+    new_rows = []
+    duplicate_rows = 0
+    for row in validation.accepted:
+        key = tuple(row[field] for field in contract.idempotency_by)
+        values = tuple(row[field] for field in value_fields)
+        if key not in existing:
+            new_rows.append(row)
+            existing[key] = values
+        elif existing[key] == values:
+            duplicate_rows += 1
+        else:
+            raise IdempotencyConflictError(
+                f"{dataset} replay changed canonical values for idempotency key {key!r}"
+            )
     groups: dict[tuple[int, int], list[dict[str, Any]]] = defaultdict(list)
     for row in new_rows:
         event_value = row[EVENT_FIELDS[dataset]]

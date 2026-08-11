@@ -47,3 +47,6 @@ and the partition-layout decision are documented in
 Normal operation uses a separate checkpoint-driven incremental command with an
 optional revision overlap window. See
 [`docs/incremental_ingestion.md`](docs/incremental_ingestion.md).
+
+Idempotency keys and replay/conflict behavior are documented and executable via
+[`docs/idempotency.md`](docs/idempotency.md).

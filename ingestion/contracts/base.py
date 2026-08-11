@@ -103,6 +103,7 @@ class Contract:
     name: str
     fields: Mapping[str, Field]
     unique_by: tuple[str, ...]
+    idempotency_by: tuple[str, ...]
     rules: tuple[Rule, ...] = ()
     aliases: Mapping[str, str] = field(default_factory=dict)
     source_metadata: Mapping[str, Any] = field(default_factory=dict)

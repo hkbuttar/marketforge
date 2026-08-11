@@ -34,10 +34,16 @@ class SourceContractTests(unittest.TestCase):
         for contract in CONTRACTS.values():
             self.assertTrue(contract.fields)
             self.assertTrue(contract.unique_by)
+            self.assertTrue(contract.idempotency_by)
             self.assertIn("event_time_field", contract.source_metadata)
             self.assertIn("source", contract.fields)
             self.assertIn("source_record_id", contract.fields)
             self.assertIn("ingested_at", contract.fields)
+
+    def test_domain_idempotency_keys_are_explicit(self):
+        self.assertEqual(CONTRACTS["prices"].idempotency_by, ("symbol", "date", "source"))
+        for domain in ("fundamentals", "earnings", "macro", "news"):
+            self.assertEqual(CONTRACTS[domain].idempotency_by, ("source", "source_record_id"))
 
     def test_valid_price_is_normalized(self):
         result = PRICES_CONTRACT.validate(

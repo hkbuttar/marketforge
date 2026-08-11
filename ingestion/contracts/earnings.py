@@ -15,6 +15,7 @@ EARNINGS_CONTRACT = Contract(
         "ingested_at": Field(utc_datetime),
     },
     unique_by=("source", "source_record_id"),
+    idempotency_by=("source", "source_record_id"),
     aliases={"ticker": "symbol", "event_time": "event_timestamp"},
     source_metadata={"event_time_field": "event_timestamp", "supports_scheduled_events": True},
 )

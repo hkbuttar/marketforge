@@ -26,6 +26,7 @@ FUNDAMENTALS_CONTRACT = Contract(
         "ingested_at": Field(utc_datetime),
     },
     unique_by=("source", "source_record_id"),
+    idempotency_by=("source", "source_record_id"),
     rules=(period_order,),
     aliases={"ticker": "symbol", "fiscal_period_end": "period_end"},
     source_metadata={"event_time_field": "period_end", "knowledge_time_field": "filed_at"},

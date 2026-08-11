@@ -1,0 +1,21 @@
+{
+  "source contract correctness": ["tests/unit/test_source_contracts.py"],
+  "normalization correctness": ["tests/unit/test_source_contracts.py", "tests/integration/test_dbt_staging.py"],
+  "idempotency": ["tests/failure/test_idempotency.py"],
+  "deduplication": ["tests/integration/test_backfill.py", "tests/integration/test_streamalpha_bridge.py"],
+  "atomic-write recovery": ["tests/failure/test_atomic_writes.py"],
+  "checkpoint consistency": ["tests/integration/test_incremental.py", "tests/property/test_invariants.py"],
+  "late-arriving data handling": ["tests/integration/test_incremental.py"],
+  "schema evolution": ["tests/unit/test_source_contracts.py", "tests/integration/test_backfill.py"],
+  "backfill overlap": ["tests/integration/test_range_backfill.py"],
+  "data-quality checks": ["tests/integration/test_statistical_quality.py", "tests/failure/test_synthetic_failure_dataset.py"],
+  "reconciliation invariants": ["tests/unit/test_reconciliation.py", "tests/property/test_invariants.py"],
+  "dbt model correctness": ["tests/integration/test_dbt_staging.py"],
+  "derived-metric correctness": ["tests/integration/test_analytical_correctness.py"],
+  "freshness calculation": ["tests/unit/test_freshness.py"],
+  "storage guardrails": ["tests/unit/test_resource_guardrails.py"],
+  "compaction equivalence": ["tests/integration/test_compaction.py"],
+  "FastAPI responses": ["tests/integration/test_query_api.py"],
+  "end-to-end pipeline": ["tests/integration/test_end_to_end_platform.py", "tests/integration/test_demo_scenario.py"],
+  "injected process failures": ["tests/failure/test_external_failures.py", "tests/failure/test_recovery_drills.py"]
+}

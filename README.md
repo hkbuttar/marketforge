@@ -1,6 +1,24 @@
 # MarketForge — Local-First Analytical Data Platform
 Local-first analytical data platform for equity, fundamental, macro, and news data. Incremental ingestion, Parquet lake storage, DuckDB analytics, dbt transformations, Dagster orchestration, schema contracts, lineage, backfills, observability, and FastAPI serving — CPU-only.
 
+## Testing and validation
+
+The current deterministic suite passes **110 tests across all 19 required
+validation categories**, with zero failures, errors, or skips, as measured on
+2026-08-11. This count uses `unittest` test methods; Hypothesis examples and
+subtests are intentionally not inflated into separate headline tests.
+
+```bash
+python -m scripts.test_summary
+```
+
+Coverage includes contracts, normalization, idempotency, deduplication, atomic
+recovery, checkpoints, late data, schema evolution, overlap, quality,
+reconciliation, dbt and derived metrics, freshness, resource guardrails,
+compaction, FastAPI, end-to-end behavior, and injected failures. The complete
+evidence map and counting semantics are in
+[`docs/testing_validation.md`](docs/testing_validation.md).
+
 ## Resource budget
 
 The initial development machine and explicit project limits are recorded in

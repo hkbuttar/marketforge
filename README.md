@@ -23,3 +23,9 @@ Results are appended as JSON Lines to `benchmarks/results.jsonl` by default. A
 job that exceeds the configured runtime or peak-memory budget exits nonzero
 after writing its measurement. Use `--help` for path, row-count, and limit
 overrides. See [`benchmarks/README.md`](benchmarks/README.md) for metric semantics.
+
+## Canonical data model
+
+The entity definitions, grain, key strategy, and time semantics are documented
+in [`docs/data_model.md`](docs/data_model.md). The corresponding DuckDB DDL lives
+in [`warehouse/duckdb/init.sql`](warehouse/duckdb/init.sql).

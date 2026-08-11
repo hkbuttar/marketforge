@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, HTTPException, Query, Request
+from fastapi.middleware.cors import CORSMiddleware
 
 from backend.schemas import (
     DatasetHealthList, DatasetList, DatasetSummary, LineageResponse,
@@ -23,6 +24,13 @@ def create_app(*, database: Path | None = None, lineage_path: Path | None = None
     metadata_store = metadata_store or Path(os.getenv(
         "MARKETFORGE_METADATA_STORE", "warehouse/metadata/operational.sqlite"))
     app = FastAPI(title="MarketForge API", version="0.1.0")
+    origins = os.getenv(
+        "MARKETFORGE_CORS_ORIGINS", "http://127.0.0.1:5173,http://localhost:5173"
+    ).split(",")
+    app.add_middleware(
+        CORSMiddleware, allow_origins=[origin.strip() for origin in origins if origin.strip()],
+        allow_credentials=False, allow_methods=["GET"], allow_headers=["*"],
+    )
     app.state.query_service = QueryService(database, lineage_path)
 
     @app.get("/health/live", response_model=LivenessResponse)

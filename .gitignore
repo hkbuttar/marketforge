@@ -13,3 +13,6 @@ dbt/logs/
 dbt/dbt_packages/
 .venv*/
 venv/
+frontend/node_modules/
+frontend/dist/
+frontend/.env

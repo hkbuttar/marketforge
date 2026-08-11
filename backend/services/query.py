@@ -9,7 +9,7 @@ from typing import Any
 
 import duckdb
 
-from warehouse.lineage import ancestors
+from warehouse.lineage import descendants
 from backend.services.cache import QueryCache
 
 
@@ -96,7 +96,7 @@ class QueryService:
         def load():
             graph = json.loads(self.lineage_path.read_text(encoding="utf-8"))
             try:
-                return ancestors(graph, f"source.marketforge.raw.{dataset}")
+                return descendants(graph, f"source.marketforge.raw.{dataset}")
             except ValueError as exc:
                 raise KeyError(dataset) from exc
         return self._cached("lineage", (dataset,), load, include_lineage=True)

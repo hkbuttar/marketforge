@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from warehouse.lineage import ancestors, build_lineage, write_lineage
+from warehouse.lineage import ancestors, build_lineage, descendants, write_lineage
 
 
 class LineageTests(unittest.TestCase):
@@ -34,6 +34,9 @@ class LineageTests(unittest.TestCase):
             trace = ancestors(graph, "mart_prices")
             self.assertEqual(len(trace["nodes"]), 3)
             self.assertEqual(len(trace["edges"]), 2)
+            downstream = descendants(graph, "prices")
+            self.assertEqual({node["name"] for node in downstream["nodes"]},
+                             {"prices", "stg_prices", "mart_prices"})
             source = next(node for node in trace["nodes"] if node["type"] == "source")
             self.assertEqual(source["dataset_build_id"], "build-1")
             self.assertEqual(source["pipeline_run_ids"], ["ingest-1"])

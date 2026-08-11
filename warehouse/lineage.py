@@ -101,6 +101,25 @@ def ancestors(graph: dict[str, Any], target: str) -> dict[str, Any]:
     }
 
 
+def descendants(graph: dict[str, Any], source: str) -> dict[str, Any]:
+    by_id = {node["id"]: node for node in graph["nodes"]}
+    matches = [node_id for node_id, node in by_id.items() if node_id == source or node["name"] == source]
+    if len(matches) != 1:
+        raise ValueError(f"source must match exactly one lineage node; found {len(matches)}")
+    selected = {matches[0]}
+    changed = True
+    while changed:
+        before = len(selected)
+        selected.update(edge["to"] for edge in graph["edges"] if edge["from"] in selected)
+        changed = len(selected) != before
+    return {
+        **{key: value for key, value in graph.items() if key not in {"nodes", "edges"}},
+        "source": matches[0],
+        "nodes": [node for node in graph["nodes"] if node["id"] in selected],
+        "edges": [edge for edge in graph["edges"] if edge["from"] in selected and edge["to"] in selected],
+    }
+
+
 def write_lineage(graph: dict[str, Any], target: Path) -> None:
     target.parent.mkdir(parents=True, exist_ok=True)
     temporary = target.with_suffix(target.suffix + ".tmp")

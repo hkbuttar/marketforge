@@ -54,6 +54,9 @@ stores transactional operational metadata. FastAPI exposes allowlisted reads, an
 the React application is a data-platform control plane rather than the system of
 record.
 
+The construction sequence and phase gates are recorded in the
+[`implementation-order audit`](docs/implementation_order.md).
+
 ## Why local-first?
 
 The reference machine is a 14-core Apple M4 Pro MacBook Pro with 48 GB RAM, but
@@ -363,5 +366,6 @@ a system of record. See [`docs/deployment.md`](docs/deployment.md).
 - [Dagster orchestration](docs/dagster_orchestration.md)
 - [FastAPI serving](docs/query_serving.md)
 - [React control plane](docs/frontend_console.md)
+- [Implementation-order audit](docs/implementation_order.md)
 - [CI/CD](docs/ci_cd.md)
 - [Deployment](docs/deployment.md)

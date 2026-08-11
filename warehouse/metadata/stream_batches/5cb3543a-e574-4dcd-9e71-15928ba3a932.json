@@ -1,0 +1,12 @@
+{
+  "run_id": "5cb3543a-e574-4dcd-9e71-15928ba3a932",
+  "status": "success",
+  "polled_messages": 100,
+  "accepted_events": 0,
+  "duplicate_events": 100,
+  "quarantined_events": 0,
+  "files_written": 0,
+  "committed_messages": 100,
+  "started_at": "2026-08-11T18:36:49.641866+00:00",
+  "completed_at": "2026-08-11T18:36:49.664325+00:00"
+}

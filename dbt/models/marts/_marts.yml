@@ -1,6 +1,13 @@
 version: 2
 
 models:
+  - name: mart_stream_anomalies
+    description: "Optional StreamAlpha anomalies enriched with prior daily market context."
+    columns:
+      - name: event_id
+        data_tests: [not_null, unique]
+      - name: event_timestamp
+        data_tests: [not_null]
   - name: mart_security_daily
     description: "Consumer-facing daily symbol analytics at source-specific grain."
     columns:

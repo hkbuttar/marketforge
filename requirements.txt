@@ -9,3 +9,6 @@ dbt-duckdb>=1.10,<1.11
 # Orchestration and local UI
 dagster>=1.10,<2
 dagster-webserver>=1.10,<2
+
+# Optional StreamAlpha bridge (the core platform does not require Kafka)
+# confluent-kafka>=2.5,<3

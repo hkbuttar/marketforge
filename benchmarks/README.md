@@ -40,3 +40,11 @@ ZSTD remains the production choice: it saves another 38% relative to Snappy and
 Analytical reads remain columnar and roughly equivalent to the other Parquet
 encodings; aggregation is about 30 times faster than CSV in this run. Timings are
 machine-specific and should be remeasured after major hardware or dataset changes.
+
+## Partition layout benchmark
+
+`python -m benchmarks.partition_layout --iterations 3` compares one file,
+year/month, and year/month/symbol layouts across one-day cross sections,
+single-symbol months, one-year scans, and full-history aggregations. Temporary
+layouts are removed automatically. The measured decision and results are recorded
+in `docs/historical_backfill.md`.

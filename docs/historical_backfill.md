@@ -28,26 +28,30 @@ runtime, timestamps, quarantine counts, duplicates, and files written.
 
 ## Partition experiment
 
-`benchmarks/partition_layout.py` compares year/month and year/month/day layouts
-using 100 symbols and one calendar year of weekday bars (26,100 rows). It records
-file count, compressed bytes, and median latency for a month-filtered analytical
-query. Run it on the target machine whenever DuckDB or hardware changes:
+`benchmarks/partition_layout.py` compares a single file, year/month partitions,
+and year/month/symbol partitions using the real local price lake. It records file
+count, compressed bytes, write cost, pruning, and median latency for four common
+workloads. Run it whenever DuckDB, hardware, or the universe changes:
 
 ```bash
-.venv/bin/python benchmarks/partition_layout.py
+python -m benchmarks.partition_layout --iterations 3
 ```
 
-The selected layout is **year/month**. Both layouts prune a query constrained by
-year and month, while daily partitioning creates roughly 22 times more files for
-this workload. Monthly files keep file-system and Parquet-footer overhead bounded
-without sacrificing the dominant query filter. Exact results from the initial
-machine (DuckDB 1.5.5, 2026-08-11) were:
+The selected production layout remains **year/month**. A single file is fastest at
+the current 68,897-row scale, but every incremental or late-arriving write would
+require replacing that file, violating immutable raw storage. Monthly partitioning
+adds 15% disk overhead and roughly 15 ms of file-discovery latency while pruning a
+day or month query to one of 68 files. It preserves append-only writes and bounds
+the amount of data affected operationally.
 
-| Layout | Rows | Files | Compressed bytes | Median June query |
-| --- | ---: | ---: | ---: | ---: |
-| year/month | 26,100 | 12 | 22,444 | 3.088 ms |
-| year/month/day | 26,100 | 261 | 252,387 | 60.155 ms |
+| Layout | Files | Size | Write | One day | One month/symbol | Full aggregation |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Single file | 1 | 1,276,768 B | 20.499 ms | 0.742 ms | 3.510 ms | 2.075 ms |
+| Year/month | 68 | 1,470,235 B | 35.161 ms | 17.189 ms | 16.483 ms | 18.526 ms |
+| Year/month/symbol | 3,332 | 7,538,123 B | 733.389 ms | 744.861 ms | 733.198 ms | 821.784 ms |
 
-This synthetic test is intentionally small and is not a universal storage claim;
-it demonstrates the file-count and footer overhead relevant to MarketForge's
-bounded daily-bar workload.
+Year/month/symbol is rejected: it creates 49 files for one cross-sectional day,
+costs 490% more disk than a single file, and makes even a perfectly pruned
+single-symbol query expensive because DuckDB must discover thousands of paths.
+The measurements are machine- and dataset-specific, but the operational tradeoff
+is explicit and reproducible.

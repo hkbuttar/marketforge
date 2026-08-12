@@ -13,11 +13,19 @@ laptop: immutable raw inputs, checkpointed increments, explicit contracts,
 quarantine, reproducible builds, point-in-time-aware transformations, lineage,
 quality gates, recovery drills, and bounded serving APIs.
 
+**[Open the live MarketForge dashboard](https://marketforge-flame.vercel.app/)**
+
+The public dashboard is a read-only control plane backed by a bounded snapshot
+materialized from live Tiingo, SEC EDGAR, Business Quant, FRED, and NewsAPI
+requests during each Render deployment. It is a demonstration surface, not the
+full local lake or a continuously streaming system.
+
 ## Architecture
 
 ```text
 External Sources
-  Tiingo / files / optional StreamAlpha
+  Tiingo / SEC / Business Quant / FRED / NewsAPI
+              / files / optional StreamAlpha
               │
               ▼
     Incremental Ingestion ────────┐
@@ -92,8 +100,9 @@ measured benefit. The explicit budget and guardrails live in
 | News | NewsAPI; 25 current metadata records | Bounded metadata batches | Headline, URL, publisher, and timestamp only; licensing governs use and no article bodies are retained. |
 
 The three-row difference between the total 140,703-row price lake and the 140,700
-Tiingo rows is the checked smoke fixture. The hosted demo is a separate generated
-90-row snapshot and must not be confused with the full local lake. See
+Tiingo rows is the checked smoke fixture. The hosted demo is a separate bounded
+live-provider snapshot rebuilt during deployment and must not be confused with
+the full local lake. See
 [`docs/tiingo_prices.md`](docs/tiingo_prices.md) and
 [`docs/deployment.md`](docs/deployment.md).
 
@@ -272,7 +281,10 @@ No browser code reads DuckDB, SQLite, or Parquet directly.
 
 ![MarketForge dependency lineage](docs/assets/console-lineage.png)
 
-These captures use the generated, credential-free hosted snapshot. They demonstrate the real React/FastAPI interface without redistributing Tiingo data.
+These captures were generated from the earlier credential-free demonstration
+fixture. The current public dashboard uses a bounded live-provider snapshot;
+provider credentials remain server-side and are not embedded in the React build
+or returned by the API.
 
 Sequential in-process serving measurements over Tiingo-derived marts recorded
 cold medians of 0.90–8.08 ms and warm medians of 0.48–1.59 ms across six endpoints.
@@ -283,7 +295,7 @@ These are not concurrency or throughput claims. See
 
 ## Testing
 
-The deterministic suite currently passes **127 tests across all 19 required
+The deterministic suite currently passes **128 tests across all 19 required
 validation categories**, with zero failures, errors, or skips, measured on
 2026-08-12:
 
@@ -334,10 +346,15 @@ strategy is documented in [`docs/docker_strategy.md`](docs/docker_strategy.md).
 
 ## Deployment boundary
 
-The public split is a Vercel static frontend plus a lightweight Render API backed
-by a generated 90-row, three-security snapshot. The full local lake, provider
-credentials, orchestration, and failure drills are not deployed. No deployment is
-a system of record. See [`docs/deployment.md`](docs/deployment.md).
+The [public dashboard](https://marketforge-flame.vercel.app/) is a Vercel static
+frontend backed by a lightweight Render API. Render materializes a bounded
+snapshot at build time: recent AAPL, MSFT, and XOM prices, selected Apple SEC
+fundamentals and Business Quant earnings, five FRED series, and NewsAPI metadata.
+Provider secrets exist only as Render environment variables and are used during
+the build; they are not shipped to the browser or stored in published data. The
+full local lake, Dagster orchestration, StreamAlpha consumer, and failure drills
+remain local. No deployment is a system of record. See
+[`docs/deployment.md`](docs/deployment.md).
 
 ## Limitations
 
@@ -345,7 +362,8 @@ a system of record. See [`docs/deployment.md`](docs/deployment.md).
 - DuckDB concurrency differs from a multi-user analytical warehouse.
 - Local filesystem durability is not cloud object-store durability.
 - Single-machine Dagster does not exercise multi-node scheduling or worker loss.
-- The hosted demo is a compact snapshot, not the full ingestion pipeline.
+- The hosted demo is a compact deployment-time snapshot, not the full ingestion
+  pipeline or a continuously refreshing feed; redeployment rebuilds it.
 - Provider revisions, outages, entitlements, and inaccurate timestamps remain
   upstream risks; optional-domain production loads are deliberately bounded.
 - Point-in-time correctness exists only where event and knowledge timestamps are

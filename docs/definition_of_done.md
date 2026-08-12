@@ -33,4 +33,4 @@ This command checks that every condition retains its implementation, test, docum
 
 ## Status boundaries
 
-The final Definition of Done is complete and the Step 57 robustness audit passes. The independent Step 56 MVP scale target remains 99 of 100 Tiingo securities. These statements are intentionally separate: the final checklist tests platform behavior, while the MVP gate additionally imposes a universe-size target.
+The final Definition of Done, Step 57 robustness audit, and independent Step 56 MVP gate all pass. The retained Tiingo lake contains 100 securities, while the final checklist separately verifies platform behavior.

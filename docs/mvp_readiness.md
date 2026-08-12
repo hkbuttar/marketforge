@@ -1,10 +1,10 @@
 # MVP readiness
 
-Step 56 defines a deliberately narrow MVP. MarketForge currently passes 12 of its 13 gates. The retained lake has one real historical provider and 139,244 Tiingo rows, but covers 99 securities rather than the required 100.
+Step 56 defines a deliberately narrow MVP. MarketForge passes all 13 gates. The retained lake has one real historical provider, 140,700 Tiingo rows, and the required 100-security universe.
 
 | Requirement | Status | Evidence |
 | --- | --- | --- |
-| 100 securities | **Open** | 99 distinct Tiingo symbols are loaded; the configured universe is intentionally expanded only after history is retained |
+| 100 securities | Pass | 100 distinct Tiingo symbols are loaded and reconciled through 2026-08-11 |
 | One historical price source | Pass | Tiingo, 2021-01-04 through 2026-08-10 |
 | Parquet | Pass | Immutable year/month raw partitions |
 | DuckDB | Pass | Direct Parquet views and analytical catalogs |
@@ -26,8 +26,8 @@ python -m scripts.check_mvp
 
 It exits nonzero until all requirements pass. For reporting workflows that must retain the JSON result while incomplete, use `--allow-incomplete`.
 
-## Closing the scale gate
+## Maintaining the scale gate
 
-Load one additional liquid U.S. symbol over the retained date range, reconcile the provider and canonical counts, and only then append it to `config/price_universe.txt`. Rerun the historical and incremental benchmarks afterward because file size, runtime, and memory claims will change. Credentials and raw Tiingo data remain local and must not be committed.
+Load complete history before adding any future symbol to `config/price_universe.txt`, then reconcile provider and canonical counts. Credentials and raw Tiingo data remain local and must not be committed. Benchmark results in the repository retain their measured dataset size and should not be generalized to the expanded lake until a complete rerun publishes replacement artifacts.
 
 No other MVP gate depends on adding another provider or distributed infrastructure.

@@ -18,7 +18,7 @@ The foundation gate requires a repeatable path from a source payload through val
 
 ## Scope notes
 
-- The real Tiingo lake contains 99 securities. It proves the workflow and remains one security below the original 100-security MVP target.
+- The real Tiingo lake contains 100 securities and satisfies the original MVP scale target.
 - Fundamentals, earnings, macro, and news have executable contracts and deterministic fixtures, but no production providers are loaded.
 - StreamAlpha was integrated only after the standalone batch platform was operational; the core platform does not require it.
 - Console views are URL-addressable for reproducible capture from the deterministic demo snapshot. Browser capture remains an explicit polish gap in this environment.

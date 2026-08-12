@@ -30,4 +30,4 @@ The public-demo check validates that deployment definitions and the deterministi
 
 ## Relationship to the MVP gate
 
-Maximum-robustness capability coverage is complete, but the independent Step 56 scale gate remains at 99 of 100 Tiingo securities. Therefore `check_robustness` returns `READY` while `check_mvp` correctly returns `NOT_READY`. This is an implementation-order deviation from the plan, not a reason to weaken either gate.
+Maximum-robustness capability coverage and the independent Step 56 scale gate are both complete. `check_robustness` returns `READY`, and `check_mvp` reports all 13 requirements passing with 100 Tiingo securities.

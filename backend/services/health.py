@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import sqlite3
+from contextlib import closing
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
@@ -47,7 +48,7 @@ def readiness(database: Path, metadata_store: Path) -> list[dict[str, str]]:
     else:
         try:
             uri = metadata_store.resolve().as_uri() + "?mode=ro"
-            with sqlite3.connect(uri, uri=True) as connection:
+            with closing(sqlite3.connect(uri, uri=True)) as connection:
                 connection.execute("SELECT 1").fetchone()
             checks.append(ComponentCheck("metadata_store", "ready", "read-only query succeeded"))
         except sqlite3.Error as exc:

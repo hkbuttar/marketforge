@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import sqlite3
+from contextlib import closing
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -76,7 +77,7 @@ class AuditStore:
                 item["status"], item.get("input_rows", 0), item.get("records_written", item.get("accepted_rows", 0)),
                 item.get("quarantined_rows", 0), item.get("error"), str(path),
             ))
-        with self.connect() as connection:
+        with closing(self.connect()) as connection, connection:
             connection.executemany(
                 "INSERT OR REPLACE INTO pipeline_runs VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", rows
             )
@@ -96,7 +97,7 @@ class AuditStore:
                 ).fetchone()[0]
             created_at = datetime.fromtimestamp(path.stat().st_mtime, timezone.utc).isoformat()
             rows.append((dataset, partition, _sha256(path), row_count, created_at, run_id, str(path)))
-        with self.connect() as connection:
+        with closing(self.connect()) as connection, connection:
             connection.executemany(
                 "INSERT OR REPLACE INTO dataset_versions VALUES (?,?,?,?,?,?,?)", rows
             )
@@ -128,7 +129,7 @@ class AuditStore:
                 item["status"], item.get("age_hours"), item.get("expected_event_time"),
                 item["reason"], item["evaluated_at"],
             ))
-        with self.connect() as connection:
+        with closing(self.connect()) as connection, connection:
             connection.executemany(
                 "INSERT OR REPLACE INTO quality_results VALUES (?,?,?,?,?,?,?,?,?)", rows
             )
@@ -146,7 +147,7 @@ class AuditStore:
         finally:
             source.close()
         values = [(dataset, provider, "event_date", value, updated, run_id) for dataset, provider, value, updated, run_id in rows]
-        with self.connect() as connection:
+        with closing(self.connect()) as connection, connection:
             connection.executemany("INSERT OR REPLACE INTO checkpoints VALUES (?,?,?,?,?,?)", values)
         return len(values)
 

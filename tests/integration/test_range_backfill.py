@@ -57,9 +57,10 @@ class RangeBackfillTests(unittest.TestCase):
             files = list((root / "raw/prices").glob("**/*.parquet"))
             self.assertEqual(len(files), 4)
             self.assertIn("month=04", str(next(path for path in files if "feb-apr" in path.name)))
-            count = duckdb.connect().execute(
-                "SELECT count(*) FROM read_parquet(?)", [str(root / "raw/**/*.parquet")]
-            ).fetchone()[0]
+            with duckdb.connect() as connection:
+                count = connection.execute(
+                    "SELECT count(*) FROM read_parquet(?)", [str(root / "raw/**/*.parquet")]
+                ).fetchone()[0]
             self.assertEqual(count, 4)
             manifest = json.loads((root / "metadata/feb-apr.json").read_text())
             self.assertEqual(manifest["run_type"], "range_backfill")

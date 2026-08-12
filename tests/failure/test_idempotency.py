@@ -42,9 +42,10 @@ class IdempotencyFailureTests(unittest.TestCase):
             with self.assertRaisesRegex(IdempotencyConflictError, "changed canonical values"):
                 run_backfill("prices", [price("revision", close=102)], run_id="conflict", **options)
             self.assertEqual(set((root / "raw").glob("**/*.parquet")), files_before)
-            count = duckdb.connect().execute(
-                "SELECT count(*) FROM read_parquet(?)", [str(root / "raw" / "**/*.parquet")]
-            ).fetchone()[0]
+            with duckdb.connect() as connection:
+                count = connection.execute(
+                    "SELECT count(*) FROM read_parquet(?)", [str(root / "raw" / "**/*.parquet")]
+                ).fetchone()[0]
             self.assertEqual(count, 1)
             self.assertFalse((root / "runs" / "conflict.json").exists())
 

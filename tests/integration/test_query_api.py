@@ -2,6 +2,7 @@ import json
 import tempfile
 import unittest
 import sqlite3
+from contextlib import closing
 from pathlib import Path
 
 import duckdb
@@ -44,7 +45,7 @@ class QueryApiTests(unittest.TestCase):
             {"id": "source.marketforge.raw.prices", "name": "prices", "type": "source",
              "path": "sources.yml", "relation": "raw_prices"}], "edges": []}))
         metadata = root / "operational.sqlite"
-        with sqlite3.connect(metadata) as connection:
+        with closing(sqlite3.connect(metadata)) as connection, connection:
             connection.execute("""CREATE TABLE pipeline_runs (
                 run_id TEXT, job_name TEXT, dataset TEXT, run_type TEXT,
                 started_at TEXT, finished_at TEXT, status TEXT, records_fetched INTEGER,

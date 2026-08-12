@@ -1,5 +1,6 @@
 import json
 import sqlite3
+from contextlib import closing
 import tempfile
 import unittest
 from datetime import datetime, timezone
@@ -44,7 +45,7 @@ class AuditStoreTests(unittest.TestCase):
             first = store.sync_all(metadata, root / "raw")
             second = store.sync_all(metadata, root / "raw")
             self.assertEqual(first, second)
-            with sqlite3.connect(database) as connection:
+            with closing(sqlite3.connect(database)) as connection, connection:
                 run = connection.execute(
                     "SELECT status, records_fetched, records_written FROM pipeline_runs"
                 ).fetchone()

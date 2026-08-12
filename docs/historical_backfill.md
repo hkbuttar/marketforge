@@ -38,7 +38,7 @@ python -m benchmarks.partition_layout --iterations 3
 ```
 
 The selected production layout remains **year/month**. A single file is fastest at
-the current 68,897-row scale, but every incremental or late-arriving write would
+the current 140,703-row scale, but every incremental or late-arriving write would
 require replacing that file, violating immutable raw storage. Monthly partitioning
 adds 15% disk overhead and roughly 15 ms of file-discovery latency while pruning a
 day or month query to one of 68 files. It preserves append-only writes and bounds
@@ -46,12 +46,12 @@ the amount of data affected operationally.
 
 | Layout | Files | Size | Write | One day | One month/symbol | Full aggregation |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Single file | 1 | 1,276,768 B | 20.499 ms | 0.742 ms | 3.510 ms | 2.075 ms |
-| Year/month | 68 | 1,470,235 B | 35.161 ms | 17.189 ms | 16.483 ms | 18.526 ms |
-| Year/month/symbol | 3,332 | 7,538,123 B | 733.389 ms | 744.861 ms | 733.198 ms | 821.784 ms |
+| Single file | 1 | 2,568,494 B | 35.916 ms | 0.472 ms | 1.448 ms | 2.931 ms |
+| Year/month | 68 | 2,799,170 B | 65.760 ms | 16.839 ms | 17.047 ms | 19.290 ms |
+| Year/month/symbol | 6,800 | 15,369,352 B | 1,370.805 ms | 1,628.152 ms | 1,626.944 ms | 1,820.128 ms |
 
-Year/month/symbol is rejected: it creates 49 files for one cross-sectional day,
-costs 490% more disk than a single file, and makes even a perfectly pruned
+Year/month/symbol is rejected: it creates 100 files for one cross-sectional day,
+costs 498% more disk than a single file, and makes even a perfectly pruned
 single-symbol query expensive because DuckDB must discover thousands of paths.
 The measurements are machine- and dataset-specific, but the operational tradeoff
 is explicit and reproducible.

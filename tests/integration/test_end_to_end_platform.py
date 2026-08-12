@@ -1,6 +1,7 @@
 import json
 import shutil
 import sqlite3
+from contextlib import closing
 import subprocess
 import sys
 import tempfile
@@ -76,7 +77,7 @@ class EndToEndPlatformTests(unittest.TestCase):
             self.assertAlmostEqual(mart[3], 0.01)
 
             metadata_store = root / "operational.sqlite"
-            with sqlite3.connect(metadata_store) as connection:
+            with closing(sqlite3.connect(metadata_store)) as connection, connection:
                 connection.execute("CREATE TABLE marker (value INTEGER)")
             client = TestClient(create_app(
                 database=database, lineage_path=root / "lineage.json",

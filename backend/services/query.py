@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import hashlib
 import sqlite3
+from contextlib import closing
 from pathlib import Path
 from typing import Any
 
@@ -129,7 +130,7 @@ class QueryService:
             raise MartUnavailable(f"operational metadata store not found: {self.metadata_store}")
         try:
             uri = self.metadata_store.resolve().as_uri() + "?mode=ro"
-            with sqlite3.connect(uri, uri=True) as connection:
+            with closing(sqlite3.connect(uri, uri=True)) as connection:
                 connection.row_factory = sqlite3.Row
                 return [dict(row) for row in connection.execute(sql, parameters).fetchall()]
         except sqlite3.Error as exc:

@@ -15,14 +15,14 @@ that the measured workload does not need.
 ## Short project card
 
 MarketForge is a local-first analytical data platform built around systems
-engineering rather than price prediction. It incrementally loads a 49-symbol
+engineering rather than price prediction. It incrementally loads a 100-symbol
 Tiingo universe into immutable, partitioned Parquet; queries it with DuckDB;
 builds tested analytical marts with dbt; orchestrates asset dependencies with
 Dagster; and exposes health, lineage, quarantine, benchmarks, and governed
 analytics through FastAPI and React. Failure injection verifies replay-safe
 recovery, checkpoint consistency, atomic writes, and schema isolation. On the
-68,894-row Tiingo history, daily incremental processing was 152.82× faster than a
-full rebuild and wrote 99.40% fewer bytes. The deterministic suite passes 112
+140,700-row Tiingo history, daily incremental processing was 160.99× faster than a
+full rebuild and wrote 99.78% fewer bytes. The deterministic suite passes 124
 tests across 19 validation categories.
 
 ## Full portfolio overview
@@ -33,7 +33,7 @@ reliability, reproducibility, observability, and incremental-processing behavior
 can be implemented faithfully on a CPU-only laptop without introducing
 distributed infrastructure purely for appearance?
 
-The platform ingests real Tiingo end-of-day prices for 49 symbols and provides
+The platform ingests real Tiingo end-of-day prices for 100 symbols and provides
 contract-tested paths for fundamental, earnings, macroeconomic, news, and
 StreamAlpha anomaly events. Every record crosses an explicit validation boundary
 before immutable ZSTD Parquet storage. DuckDB queries the lake directly, dbt
@@ -48,7 +48,7 @@ incremental processing, query serving, and Docker overhead are benchmarked.
 Measurements rejected year/month/symbol partitioning because 3,332 small files
 made representative queries dramatically slower, while ZSTD reduced the
 representative dataset by 82.04% versus CSV. Daily incremental processing handled
-49 rows in 0.226 seconds versus 68,894 rows in 34.475 seconds for a canonically
+100 rows in 0.438 seconds versus 140,700 rows in 70.540 seconds for a canonically
 equivalent rebuild.
 
 Reliability is demonstrated through executable failure cases, not architecture
@@ -56,7 +56,7 @@ diagrams alone. Tests inject provider outages and rate limits, malformed schemas
 bad values, disk exhaustion, process termination at write boundaries, dbt
 failures, late data, duplicate delivery, and compaction rollback. The accurate
 claim is an idempotent canonical result under replay—not universal exactly-once
-delivery. The deterministic suite passes 112 tests across all 19 required
+delivery. The deterministic suite passes 124 tests across all 19 required
 validation categories with no failures or skips.
 
 MarketForge also makes its limits explicit. It is not a distributed cluster,
@@ -75,15 +75,15 @@ deterministic fixtures unless stated otherwise.
   handling, canonical replay deduplication, reconciliation invariants, and
   failure-recovery drills for provider, disk, process, transformation, and
   compaction failures.
-- Benchmarked equivalent full and incremental builds over 68,894 Tiingo rows;
-  reduced daily runtime from 34.475 seconds to 0.226 seconds (152.82×) and bytes
-  written by 99.40%, with canonical hashes required to match.
+- Benchmarked equivalent full and incremental builds over 140,700 Tiingo rows;
+  reduced daily runtime from 70.540 seconds to 0.438 seconds (160.99×) and bytes
+  written by 99.78%, with canonical hashes required to match.
 - Evaluated CSV and three Parquet encodings plus three partition layouts; selected
   ZSTD/year-month based on an 82.04% storage reduction versus CSV and rejected a
   3,332-file symbol layout after measuring severe discovery overhead.
 - Built a bounded FastAPI/React control plane for dataset catalog, run history,
   freshness, quality, quarantine, lineage, storage, benchmarks, and analytics;
-  validated the platform with 112 deterministic tests across 19 categories.
+  validated the platform with 124 deterministic tests across 19 categories.
 
 ## Interview talking points
 
@@ -111,7 +111,7 @@ measurement that justifies it.
 
 ### What is real versus illustrative?
 
-The retained local lake contains 68,894 real Tiingo rows for 49 symbols plus a
+The retained local lake contains 140,700 real Tiingo rows for 100 symbols plus a
 three-row synthetic price smoke fixture. The optional StreamAlpha bridge has 500
 retained events. Fundamental, earnings, macro, and news domains have full
 contracts, dbt models, and deterministic fixtures but no production provider load.

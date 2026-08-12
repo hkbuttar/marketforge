@@ -96,9 +96,10 @@ class BackfillTests(unittest.TestCase):
             self.assertEqual(audit["status"], "passed")
             files = sorted((root / "raw").glob("**/*.parquet"))
             self.assertIn("year=2026/month=01", str(files[0]))
-            count = duckdb.connect().execute(
-                "SELECT count(*) FROM read_parquet(?)", [str(root / "raw" / "**/*.parquet")]
-            ).fetchone()[0]
+            with duckdb.connect() as connection:
+                count = connection.execute(
+                    "SELECT count(*) FROM read_parquet(?)", [str(root / "raw" / "**/*.parquet")]
+                ).fetchone()[0]
             self.assertEqual(count, 2)
             quarantine = json.loads(next((root / "quarantine").glob("**/*.jsonl")).read_text())
             self.assertEqual(quarantine["raw_payload"]["source_record_id"], "bad")

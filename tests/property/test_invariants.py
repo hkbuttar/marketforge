@@ -1,4 +1,5 @@
 import sqlite3
+from contextlib import closing
 import tempfile
 import unittest
 from datetime import date, datetime, timezone
@@ -112,7 +113,7 @@ class PlatformInvariantTests(unittest.TestCase):
                 for mart in available:
                     connection.execute(f'CREATE TABLE main_marts."{mart}" (marker INTEGER)')
             metadata = root / "operational.sqlite"
-            with sqlite3.connect(metadata) as connection:
+            with closing(sqlite3.connect(metadata)) as connection, connection:
                 connection.execute("CREATE TABLE marker (value INTEGER)")
             checks = readiness(database, metadata)
             required = next(item for item in checks if item["component"] == "required_marts")

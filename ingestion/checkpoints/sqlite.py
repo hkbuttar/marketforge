@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import sqlite3
+from contextlib import closing
 from dataclasses import dataclass
 from datetime import date, datetime, timezone
 from pathlib import Path
@@ -41,7 +42,7 @@ class CheckpointStore:
         return connection
 
     def get(self, dataset: str, source: str) -> Checkpoint | None:
-        with self._connect() as connection:
+        with closing(self._connect()) as connection, connection:
             row = connection.execute(
                 """SELECT dataset, source, last_successful_event_date,
                           last_successful_run_id, updated_at
@@ -55,7 +56,7 @@ class CheckpointStore:
     def advance(self, dataset: str, source: str, event_date: date, run_id: str) -> Checkpoint:
         """Advance monotonically; an overlap run can never move state backward."""
         updated_at = datetime.now(timezone.utc)
-        with self._connect() as connection:
+        with closing(self._connect()) as connection, connection:
             current = connection.execute(
                 "SELECT last_successful_event_date FROM ingestion_checkpoint WHERE dataset=? AND source=?",
                 (dataset, source),

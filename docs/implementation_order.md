@@ -10,7 +10,7 @@ MarketForge was built from the storage contract outward. The reliable source-to-
 | 4. Reliability | Late-data overlap, schema-change handling, provider-failure tests, kill/restart drills, reconciliation, and safe compaction |
 | 5. Measurement | Storage-format, partition-strategy, full-versus-incremental, memory, and representative query benchmarks |
 | 6. Product | Bounded FastAPI reads and a React observability console backed by the same metadata, lineage, quality, and benchmark artifacts |
-| 7. Polish | CI, generated hosted snapshot, architecture and operating documentation, containerized demo API, and an optional StreamAlpha adapter; final console captures remain open |
+| 7. Polish | CI, generated hosted snapshot, architecture and operating documentation, real console captures, containerized demo API, and an optional StreamAlpha adapter |
 
 ## Phase gates
 
@@ -21,6 +21,6 @@ The foundation gate requires a repeatable path from a source payload through val
 - The real Tiingo lake contains 100 securities and satisfies the original MVP scale target.
 - Fundamentals, earnings, macro, and news have executable contracts and deterministic fixtures, but no production providers are loaded.
 - StreamAlpha was integrated only after the standalone batch platform was operational; the core platform does not require it.
-- Console views are URL-addressable for reproducible capture from the deterministic demo snapshot. Browser capture remains an explicit polish gap in this environment.
+- Console views are URL-addressable and checked captures were rendered from the deterministic demo snapshot.
 
 This audit records the implemented dependency order. It does not imply that broader MVP coverage or final release verification has been waived.

@@ -156,10 +156,10 @@ records; the checkpoint remains monotonic when only older data arrives.
 
 | Path | Rows | Runtime | Peak RAM | Bytes read | Bytes written |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| Full refresh | 68,894 | 34.475 s | 275.1 MB | 14,484,982 | 1,471,524 |
-| Daily incremental | 49 | 0.226 s | 155.1 MB | 10,328 | 8,862 |
+| Full refresh | 140,700 | 70.540 s | 489.9 MB | 29,482,823 | 2,799,772 |
+| Daily incremental | 100 | 0.438 s | 241.3 MB | 21,000 | 6,025 |
 
-The measured daily path was 152.82× faster and wrote 99.40% fewer bytes. This is
+The measured daily path was 160.99× faster and wrote 99.78% fewer bytes. This is
 a same-machine comparison with canonical equivalence, not a universal speed
 claim. Details: [`docs/incremental_vs_full_refresh.md`](docs/incremental_vs_full_refresh.md).
 
@@ -264,8 +264,18 @@ health, run history, quarantine, storage budgets, dependency lineage, measured
 benchmarks, and governed analytical consumers through bounded FastAPI endpoints.
 No browser code reads DuckDB, SQLite, or Parquet directly.
 
+## Operational console
+
+| Platform overview | Data quality |
+| --- | --- |
+| ![MarketForge platform overview](docs/assets/console-overview.png) | ![MarketForge data-quality view](docs/assets/console-quality.png) |
+
+![MarketForge dependency lineage](docs/assets/console-lineage.png)
+
+These captures use the generated, credential-free hosted snapshot. They demonstrate the real React/FastAPI interface without redistributing Tiingo data.
+
 Sequential in-process serving measurements over Tiingo-derived marts recorded
-cold medians of 0.75–6.82 ms and warm medians of 0.47–1.37 ms across six endpoints.
+cold medians of 0.90–8.08 ms and warm medians of 0.48–1.59 ms across six endpoints.
 These are not concurrency or throughput claims. See
 [`docs/query_serving.md`](docs/query_serving.md),
 [`docs/frontend_console.md`](docs/frontend_console.md), and
@@ -273,9 +283,9 @@ These are not concurrency or throughput claims. See
 
 ## Testing
 
-The deterministic suite currently passes **121 tests across all 19 required
+The deterministic suite currently passes **124 tests across all 19 required
 validation categories**, with zero failures, errors, or skips, measured on
-2026-08-11:
+2026-08-12:
 
 ```bash
 python -m scripts.test_summary
@@ -310,6 +320,7 @@ Useful reproducible commands:
 python -m scripts.check_mvp --allow-incomplete
 python -m scripts.check_robustness
 python -m scripts.check_definition_of_done
+python -m scripts.update_tiingo --shard 0 --through YYYY-MM-DD
 python -m scripts.load_tiingo --tickers AAPL,MSFT --start 2026-08-01 --end 2026-08-10
 python -m benchmarks.run
 python -m scripts.demo

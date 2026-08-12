@@ -49,3 +49,17 @@ make quality
 `make daily` runs in observe mode by default: ingestion can be performed with the
 CLI or source jobs first, then the full asset graph verifies those artifacts. A
 sleeping laptop simply resumes from its retained checkpoints on the next run.
+
+## Live Tiingo schedule
+
+The 100-symbol universe requires two hourly-safe shards on Tiingo's 50-request-per-hour Starter limit. Run shard 0 after market data is available, then shard 1 in the next clock hour:
+
+```bash
+set -a; source .env; set +a
+python -m scripts.update_tiingo --shard 0 --through YYYY-MM-DD
+# next hourly quota window
+python -m scripts.update_tiingo --shard 1 --through YYYY-MM-DD
+python -m scripts.check_quality
+```
+
+Each shard uses a seven-day overlap by default, making weekends, holidays, a sleeping laptop, and recent provider corrections replay-safe. A shard contains at most 50 symbols and therefore never intentionally exceeds the Starter hourly request allowance. Enable these commands in a local scheduler only after confirming `.env` is mode `0600`; never embed the token in a plist, crontab, log, or command argument.

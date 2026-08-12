@@ -3,7 +3,7 @@ services:
     name: marketforge-api
     runtime: python
     plan: free
-    buildCommand: pip install -r requirements-demo.txt && python -m scripts.build_demo_snapshot
+    buildCommand: pip install -r requirements-demo.txt && python -m scripts.build_demo_snapshot --live
     startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /health/ready
     envVars:
@@ -20,4 +20,20 @@ services:
       - key: MARKETFORGE_BENCHMARKS
         value: deploy/generated/benchmarks.json
       - key: MARKETFORGE_CORS_ORIGINS
+        sync: false
+      - key: MARKETFORGE_CORS_ORIGIN_REGEX
+        value: https://.*[.]vercel[.]app
+      - key: MARKETFORGE_ENABLE_LIVE_HOSTED_DATA
+        sync: false
+      - key: TIINGO_API_KEY
+        sync: false
+      - key: FRED_API_KEY
+        sync: false
+      - key: SEC_USER_AGENT
+        sync: false
+      - key: SEC_CONTACT_EMAIL
+        sync: false
+      - key: BUSINESSQUANT_API_KEY
+        sync: false
+      - key: NEWSAPI_API_KEY
         sync: false

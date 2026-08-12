@@ -38,8 +38,10 @@ def create_app(*, database: Path | None = None, lineage_path: Path | None = None
     origins = os.getenv(
         "MARKETFORGE_CORS_ORIGINS", "http://127.0.0.1:5173,http://localhost:5173"
     ).split(",")
+    origin_regex = os.getenv("MARKETFORGE_CORS_ORIGIN_REGEX") or None
     app.add_middleware(
         CORSMiddleware, allow_origins=[origin.strip() for origin in origins if origin.strip()],
+        allow_origin_regex=origin_regex,
         allow_credentials=False, allow_methods=["GET"], allow_headers=["*"],
     )
     app.state.query_service = QueryService(

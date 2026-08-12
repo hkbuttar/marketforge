@@ -1,0 +1,15 @@
+{
+  "status": "failed",
+  "source_records_fetched": 14070,
+  "records_accepted": 0,
+  "records_rejected": 0,
+  "records_deduplicated": 14070,
+  "records_written": 0,
+  "pre_write_row_count": 123770,
+  "post_write_row_count": 137840,
+  "expected_row_delta": 0,
+  "actual_row_delta": 14070,
+  "discrepancies": [
+    "post-write row delta != expected delta (14070 != 0)"
+  ]
+}

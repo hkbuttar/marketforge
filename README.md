@@ -74,7 +74,7 @@ useful engineering constraint.
 | Daily incremental peak RAM | 4,096 MB |
 | Minimum free-disk reserve | 5 GB |
 
-Distributed execution is unnecessary for 68,897 daily price rows. Spark,
+Distributed execution is unnecessary for 139,247 daily price rows. Spark,
 Kubernetes, and managed metadata services would add operational surface without a
 measured benefit. The explicit budget and guardrails live in
 [`config/resource_budget.yaml`](config/resource_budget.yaml).
@@ -83,7 +83,7 @@ measured benefit. The explicit budget and guardrails live in
 
 | Domain | Provider / coverage | Range and cadence | Limitations and usage |
 | --- | --- | --- | --- |
-| Daily prices | Tiingo; 68,894 real rows, 49 U.S. symbols | 2021-01-04–2026-08-10; market days after close | Raw, unadjusted OHLCV. Corporate actions and adjusted prices are not modeled. Internal use under the account's Tiingo terms; raw data is Git-ignored and not redistributed. |
+| Daily prices | Tiingo; 139,244 real rows, 99 U.S. symbols | 2021-01-04–2026-08-11; market days after close | Raw, unadjusted OHLCV. Corporate actions and adjusted prices are not modeled. Internal use under the account's Tiingo terms; raw data is Git-ignored and not redistributed. |
 | Synthetic prices | Included three-row smoke fixture | 2025-01-02–2025-03-03; manual | Not market data and excluded from Tiingo refresh comparisons. |
 | StreamAlpha anomalies | Optional public HTTP snapshot/Kafka adapter; 500 retained events, 15 symbols | 2026-08-04–2026-08-11 in the current local lake | HTTP endpoint has a bounded limit and no cursor, so polling is replay-safe but not gap-free. Kafka is required for continuous-delivery guarantees. |
 | Fundamentals | Executable contract and deterministic CI fixture | Quarterly event semantics; daily source-check policy | No production fundamental provider has been loaded. Point-in-time use depends on supplied `filed_at`; MarketForge does not reconstruct missing historical filing knowledge. |
@@ -91,7 +91,7 @@ measured benefit. The explicit budget and guardrails live in
 | Macro | Executable contract and deterministic CI fixture | Publication-calendar semantics | No production macro feed has been loaded. Alignment prevents using values before supplied `released_at`, but cannot correct inaccurate provider timestamps. |
 | News | Metadata-only contract and deterministic CI fixture | Four-hour target batches | No production news provider or article corpus has been loaded; headline/URL metadata only. |
 
-The three-row difference between the total 68,897-row price lake and the 68,894
+The three-row difference between the total 139,247-row price lake and the 139,244
 Tiingo rows is the checked smoke fixture. The hosted demo is a separate generated
 90-row snapshot and must not be confused with the full local lake. See
 [`docs/tiingo_prices.md`](docs/tiingo_prices.md) and

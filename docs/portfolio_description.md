@@ -22,7 +22,7 @@ Dagster; and exposes health, lineage, quarantine, benchmarks, and governed
 analytics through FastAPI and React. Failure injection verifies replay-safe
 recovery, checkpoint consistency, atomic writes, and schema isolation. On the
 140,700-row Tiingo history, daily incremental processing was 160.99× faster than a
-full rebuild and wrote 99.78% fewer bytes. The deterministic suite passes 124
+full rebuild and wrote 99.78% fewer bytes. The deterministic suite passes 127
 tests across 19 validation categories.
 
 ## Full portfolio overview
@@ -56,15 +56,15 @@ diagrams alone. Tests inject provider outages and rate limits, malformed schemas
 bad values, disk exhaustion, process termination at write boundaries, dbt
 failures, late data, duplicate delivery, and compaction rollback. The accurate
 claim is an idempotent canonical result under replay—not universal exactly-once
-delivery. The deterministic suite passes 124 tests across all 19 required
+delivery. The deterministic suite passes 127 tests across all 19 required
 validation categories with no failures or skips.
 
 MarketForge also makes its limits explicit. It is not a distributed cluster,
 DuckDB is not presented as a multi-user cloud warehouse, local filesystem
 durability is not object-store durability, and the hosted demo serves a generated
-90-row snapshot rather than the full local pipeline. Only Tiingo prices are
-production-loaded today; other source domains are executable contracts and
-deterministic fixtures unless stated otherwise.
+90-row snapshot rather than the full local pipeline. Prices have full-universe
+production coverage; FRED, SEC EDGAR, Business Quant, and NewsAPI production
+loads are deliberately bounded and retain explicit limitations.
 
 ## Résumé bullets
 
@@ -83,7 +83,7 @@ deterministic fixtures unless stated otherwise.
   3,332-file symbol layout after measuring severe discovery overhead.
 - Built a bounded FastAPI/React control plane for dataset catalog, run history,
   freshness, quality, quarantine, lineage, storage, benchmarks, and analytics;
-  validated the platform with 124 deterministic tests across 19 categories.
+  validated the platform with 127 deterministic tests across 19 categories.
 
 ## Interview talking points
 

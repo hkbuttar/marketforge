@@ -19,7 +19,7 @@ with effective_dated as (
 select
     *,
     lead(effective_from) over (
-        partition by symbol, metric_name, source
+        partition by symbol, metric_name, period_end, source
         order by effective_from, ingested_at, source_record_id
     ) as effective_to
 from effective_dated

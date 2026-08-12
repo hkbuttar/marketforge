@@ -5,7 +5,14 @@ with normalized as (
         cast(released_at as timestamptz) as released_at,
         cast(value as double) as value,
         upper(trim(unit)) as unit,
-        upper(trim(frequency)) as frequency,
+        case upper(trim(frequency))
+            when 'D' then 'DAILY'
+            when 'W' then 'WEEKLY'
+            when 'M' then 'MONTHLY'
+            when 'Q' then 'QUARTERLY'
+            when 'A' then 'ANNUAL'
+            else upper(trim(frequency))
+        end as frequency,
         lower(trim(source)) as source,
         trim(source_record_id) as source_record_id,
         cast(ingested_at as timestamptz) as ingested_at

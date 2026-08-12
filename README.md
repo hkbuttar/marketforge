@@ -86,10 +86,10 @@ measured benefit. The explicit budget and guardrails live in
 | Daily prices | Tiingo; 140,700 real rows, 100 U.S. symbols | 2021-01-04–2026-08-11; market days after close | Raw, unadjusted OHLCV. Corporate actions and adjusted prices are not modeled. Internal use under the account's Tiingo terms; raw data is Git-ignored and not redistributed. |
 | Synthetic prices | Included three-row smoke fixture | 2025-01-02–2025-03-03; manual | Not market data and excluded from Tiingo refresh comparisons. |
 | StreamAlpha anomalies | Optional public HTTP snapshot/Kafka adapter; 500 retained events, 15 symbols | 2026-08-04–2026-08-11 in the current local lake | HTTP endpoint has a bounded limit and no cursor, so polling is replay-safe but not gap-free. Kafka is required for continuous-delivery guarantees. |
-| Fundamentals | Executable contract and deterministic CI fixture | Quarterly event semantics; daily source-check policy | No production fundamental provider has been loaded. Point-in-time use depends on supplied `filed_at`; MarketForge does not reconstruct missing historical filing knowledge. |
-| Earnings | Executable contract and deterministic CI fixture | Event timestamps; weekday source-check policy | No production earnings feed has been loaded. |
-| Macro | Executable contract and deterministic CI fixture | Publication-calendar semantics | No production macro feed has been loaded. Alignment prevents using values before supplied `released_at`, but cannot correct inaccurate provider timestamps. |
-| News | Metadata-only contract and deterministic CI fixture | Four-hour target batches | No production news provider or article corpus has been loaded; headline/URL metadata only. |
+| Fundamentals | SEC EDGAR; 841 selected Apple filing facts | 10-K/10-Q filing semantics | Public company facts retain accession and `filed_at`; current bounded load covers one company and selected GAAP metrics. |
+| Earnings | Business Quant; 25 Apple quarterly EPS observations | Historical and forward estimate snapshots | Endpoint lacks announcement timestamps, so observation time is retained and is not presented as release time. |
+| Macro | FRED; 1,622 observations across five core series | Daily, monthly, and quarterly observations | Observation endpoint lacks vintage release timestamps; `released_at` remains null rather than being invented. |
+| News | NewsAPI; 25 current metadata records | Bounded metadata batches | Headline, URL, publisher, and timestamp only; licensing governs use and no article bodies are retained. |
 
 The three-row difference between the total 140,703-row price lake and the 140,700
 Tiingo rows is the checked smoke fixture. The hosted demo is a separate generated
@@ -283,7 +283,7 @@ These are not concurrency or throughput claims. See
 
 ## Testing
 
-The deterministic suite currently passes **124 tests across all 19 required
+The deterministic suite currently passes **127 tests across all 19 required
 validation categories**, with zero failures, errors, or skips, measured on
 2026-08-12:
 
@@ -321,6 +321,7 @@ python -m scripts.check_mvp --allow-incomplete
 python -m scripts.check_robustness
 python -m scripts.check_definition_of_done
 python -m scripts.update_tiingo --shard 0 --through YYYY-MM-DD
+python -m scripts.load_providers fred --start 2021-01-01
 python -m scripts.load_tiingo --tickers AAPL,MSFT --start 2026-08-01 --end 2026-08-10
 python -m benchmarks.run
 python -m scripts.demo
@@ -346,7 +347,7 @@ a system of record. See [`docs/deployment.md`](docs/deployment.md).
 - Single-machine Dagster does not exercise multi-node scheduling or worker loss.
 - The hosted demo is a compact snapshot, not the full ingestion pipeline.
 - Provider revisions, outages, entitlements, and inaccurate timestamps remain
-  upstream risks; only Tiingo prices are production-loaded today.
+  upstream risks; optional-domain production loads are deliberately bounded.
 - Point-in-time correctness exists only where event and knowledge timestamps are
   supplied and enforced; it is not claimed universally.
 - Lightweight manifests and content hashes are not Iceberg/Delta transaction logs.
@@ -382,6 +383,7 @@ a system of record. See [`docs/deployment.md`](docs/deployment.md).
 - [React control plane](docs/frontend_console.md)
 - [Implementation-order audit](docs/implementation_order.md)
 - [MVP readiness](docs/mvp_readiness.md)
+- [Real optional-domain sources](docs/real_optional_sources.md)
 - [Maximum-robustness readiness](docs/maximum_robustness.md)
 - [Final Definition of Done](docs/definition_of_done.md)
 - [CI/CD](docs/ci_cd.md)

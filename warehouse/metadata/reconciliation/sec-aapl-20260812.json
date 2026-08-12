@@ -1,0 +1,13 @@
+{
+  "status": "passed",
+  "source_records_fetched": 841,
+  "records_accepted": 841,
+  "records_rejected": 0,
+  "records_deduplicated": 0,
+  "records_written": 841,
+  "pre_write_row_count": 0,
+  "post_write_row_count": 841,
+  "expected_row_delta": 841,
+  "actual_row_delta": 841,
+  "discrepancies": []
+}

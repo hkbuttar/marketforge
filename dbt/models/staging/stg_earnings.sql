@@ -3,7 +3,10 @@ with normalized as (
         upper(trim(symbol)) as symbol,
         cast(event_timestamp as timestamptz) as event_timestamp,
         cast(fiscal_period_end as date) as fiscal_period_end,
-        upper(trim(event_status)) as event_status,
+        case upper(trim(event_status))
+            when 'ESTIMATE' then 'SCHEDULED'
+            else upper(trim(event_status))
+        end as event_status,
         cast(eps_estimate as double) as eps_estimate,
         cast(eps_actual as double) as eps_actual,
         lower(trim(source)) as source,

@@ -16,7 +16,9 @@ models:
         data_tests:
           - expression_is_true:
               arguments:
-                expression: "daily_return is null or abs(daily_return) <= 5.0"
+                # Raw prices intentionally retain corporate actions. This bound catches
+                # implausible parsing errors while permitting observed split discontinuities.
+                expression: "daily_return is null or abs(daily_return) <= 10.0"
   - name: int_rolling_volatility
     description: "Trailing 20-observation return and volatility features."
     columns:
